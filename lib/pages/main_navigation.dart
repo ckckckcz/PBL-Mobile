@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'scan_page.dart';
 import 'history.dart';
+import 'profile.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -28,6 +29,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const DashboardPage(),
     const ScanPage(),
     const HistoryPage(),
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -77,6 +79,12 @@ class _MainNavigationState extends State<MainNavigation> {
                   activeIcon: Icons.history,
                   label: 'Riwayat',
                   index: 2,
+                ),
+                _buildNavItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  label: 'Profile',
+                  index: 3,
                 ),
               ],
             ),

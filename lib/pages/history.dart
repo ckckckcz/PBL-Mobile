@@ -29,10 +29,68 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final history = await _historyService.getHistory();
 
-    setState(() {
-      _historyList = history;
-      _isLoading = false;
-    });
+    // Add dummy data if history is empty
+    if (history.isEmpty) {
+      final dummyData = _createDummyData();
+      setState(() {
+        _historyList = dummyData;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _historyList = history;
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<ScanHistory> _createDummyData() {
+    final now = DateTime.now();
+
+    return [
+      ScanHistory(
+        id: 'dummy_1',
+        imageUri: 'assets/images/history/Organik.png',
+        wasteType: 'Sisa Makanan',
+        category: 'Organik',
+        confidence: 95.8,
+        description: 'Sampah organik berupa sisa makanan yang dapat diuraikan secara alami. Cocok untuk dijadikan kompos.',
+        tips: [
+          {'title': 'Pisahkan dari sampah anorganik', 'color': '#4CAF50'},
+          {'title': 'Dapat dijadikan kompos untuk pupuk tanaman', 'color': '#4CAF50'},
+          {'title': 'Simpan di tempat tertutup untuk menghindari bau', 'color': '#4CAF50'},
+        ],
+        scanDate: now.subtract(const Duration(hours: 2)),
+      ),
+      ScanHistory(
+        id: 'dummy_2',
+        imageUri: 'assets/images/history/Anorganik.png',
+        wasteType: 'Botol Plastik',
+        category: 'Anorganik',
+        confidence: 92.3,
+        description: 'Sampah anorganik berupa botol plastik yang dapat didaur ulang. Pastikan botol bersih sebelum didaur ulang.',
+        tips: [
+          {'title': 'Cuci botol sebelum didaur ulang', 'color': '#2196F3'},
+          {'title': 'Lepaskan label dan tutup botol', 'color': '#2196F3'},
+          {'title': 'Kumpulkan dan jual ke bank sampah', 'color': '#2196F3'},
+        ],
+        scanDate: now.subtract(const Duration(days: 1)),
+      ),
+      ScanHistory(
+        id: 'dummy_3',
+        imageUri: 'assets/images/history/Organik.png',
+        wasteType: 'Daun Kering',
+        category: 'Organik',
+        confidence: 88.5,
+        description: 'Sampah organik berupa dedaunan kering. Sangat baik untuk dijadikan kompos atau mulsa tanaman.',
+        tips: [
+          {'title': 'Cacah daun agar lebih cepat terurai', 'color': '#4CAF50'},
+          {'title': 'Campurkan dengan tanah untuk kompos', 'color': '#4CAF50'},
+          {'title': 'Dapat digunakan sebagai mulsa di taman', 'color': '#4CAF50'},
+        ],
+        scanDate: now.subtract(const Duration(days: 3)),
+      ),
+    ];
   }
 
   Future<void> _deleteScan(String id) async {
@@ -265,20 +323,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     width: 70,
                     height: 70,
                     color: const Color(0xFFF5F5F5),
-                    child: File(scan.imageUri).existsSync()
-                        ? Image.file(
-                            File(scan.imageUri),
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
-                          )
-                        : Icon(
-                            scan.category.toLowerCase().contains('organik')
-                                ? Icons.eco
-                                : Icons.delete,
-                            color: const Color(0xFF4CAF50),
-                            size: 32,
-                          ),
+                    child: _buildHistoryImage(scan),
                   ),
                 ),
 
@@ -368,6 +413,47 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHistoryImage(ScanHistory scan) {
+    // Check if it's an asset image
+    if (scan.imageUri.startsWith('assets/')) {
+      return Image.asset(
+        scan.imageUri,
+        width: 70,
+        height: 70,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(
+            scan.category.toLowerCase().contains('organik')
+                ? Icons.eco
+                : Icons.recycling,
+            color: const Color(0xFF4CAF50),
+            size: 32,
+          );
+        },
+      );
+    }
+
+    // Check if it's a file path
+    final file = File(scan.imageUri);
+    if (file.existsSync()) {
+      return Image.file(
+        file,
+        width: 70,
+        height: 70,
+        fit: BoxFit.cover,
+      );
+    }
+
+    // Fallback icon
+    return Icon(
+      scan.category.toLowerCase().contains('organik')
+          ? Icons.eco
+          : Icons.recycling,
+      color: const Color(0xFF4CAF50),
+      size: 32,
     );
   }
 }
