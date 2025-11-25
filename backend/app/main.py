@@ -52,7 +52,7 @@ app.include_router(auth_router)
 
 # Load model saat startup
 BASE_DIR = Path(__file__).resolve().parent.parent
-MODEL_PATH = BASE_DIR / "model" / "model_sampah_hybrid_final.pkl"
+MODEL_PATH = BASE_DIR / "model" / "model_sampah_hybrid_final_(2).pkl"
 model = None
 
 @app.on_event("startup")
