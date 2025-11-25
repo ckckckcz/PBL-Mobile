@@ -92,30 +92,24 @@ class _EcoTipsCarouselState extends State<EcoTipsCarousel> {
                       color: Colors.white.withOpacity(0.3),
                     ),
           ),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(tip.emoji, style: const TextStyle(fontSize: 36)),
-                  const SizedBox(height: 8),
-                  Flexible(
-                    child: Text(
-                      tip.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(tip.emoji, style: const TextStyle(fontSize: 40)),
+                const SizedBox(height: 12),
+                Text(
+                  tip.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    height: 1.3,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

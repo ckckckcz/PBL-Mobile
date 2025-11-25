@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-import '../models/scan_history_model.dart';
-import '../services/scan_history_service.dart';
-import 'scan_result.dart';
+import 'dart:io';
 
 class ScanPage extends StatefulWidget {
   const ScanPage({Key? key}) : super(key: key);
@@ -21,7 +17,6 @@ class _ScanPageState extends State<ScanPage> {
   bool _isScanning = false;
   bool _isFlashOn = false;
   final ImagePicker _imagePicker = ImagePicker();
-  final ScanHistoryService _historyService = ScanHistoryService();
 
   @override
   void initState() {
@@ -30,31 +25,7 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   Future<void> _initializeCamera() async {
-    // Camera not supported on web
-    if (kIsWeb) {
-      if (mounted) {
-        setState(() {
-          _isCameraInitialized = false;
-        });
-      }
-      return;
-    }
-
     try {
-      // Request camera permission
-      final cameraStatus = await Permission.camera.request();
-      if (!cameraStatus.isGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Izin kamera diperlukan untuk menggunakan fitur scan'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-        return;
-      }
-
       _cameras = await availableCameras();
       if (_cameras != null && _cameras!.isNotEmpty) {
         _cameraController = CameraController(
@@ -72,14 +43,6 @@ class _ScanPageState extends State<ScanPage> {
       }
     } catch (e) {
       debugPrint('Error initializing camera: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kamera tidak tersedia. Silakan gunakan galeri.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
     }
   }
 
@@ -105,10 +68,12 @@ class _ScanPageState extends State<ScanPage> {
 
     try {
       final XFile photo = await _cameraController!.takePicture();
-
+      // Here you would handle the prediction
+      // For now, just show a success message
       if (mounted) {
-        // Create dummy scan result
-        await _navigateToResult(photo.path);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Foto diambil: ${photo.path}')),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -127,50 +92,17 @@ class _ScanPageState extends State<ScanPage> {
 
   Future<void> _pickImageFromGallery() async {
     try {
-      // Skip permission check on web platform
-      if (!kIsWeb) {
-        // Request storage permission for Android 12 and below
-        if (await Permission.storage.isDenied) {
-          final status = await Permission.storage.request();
-          if (!status.isGranted) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Izin storage diperlukan untuk mengakses galeri'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            return;
-          }
-        }
-
-        // Request photos permission for Android 13+
-        if (await Permission.photos.isDenied) {
-          final status = await Permission.photos.request();
-          if (!status.isGranted) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Izin akses foto diperlukan untuk mengakses galeri'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            return;
-          }
-        }
-      }
-
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
       );
 
       if (image != null) {
+        // Here you would handle the prediction
         if (mounted) {
-          // Navigate to result with dummy data
-          await _navigateToResult(image.path);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gambar dipilih: ${image.path}')),
+          );
         }
       }
     } catch (e) {
@@ -196,174 +128,30 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
-  Future<void> _navigateToResult(String imagePath) async {
-    // Generate dummy scan result data
-    final scanId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // Simulate different waste types
-    final wasteTypes = ['Sampah Organik', 'Sampah Anorganik', 'Sampah B3'];
-    final categories = ['Organik', 'Anorganik', 'B3'];
-    final random = DateTime.now().second % 3;
-
-    final tips = random == 0
-        ? [
-            {'title': 'Pisahkan dari sampah lainnya', 'color': '#4CAF50'},
-            {'title': 'Bisa dijadikan kompos', 'color': '#66BB6A'},
-            {'title': 'Manfaatkan untuk pupuk tanaman', 'color': '#81C784'},
-          ]
-        : random == 1
-        ? [
-            {'title': 'Cuci dan keringkan sebelum didaur ulang', 'color': '#2196F3'},
-            {'title': 'Pisahkan berdasarkan jenis material', 'color': '#42A5F5'},
-            {'title': 'Kirim ke bank sampah terdekat', 'color': '#64B5F6'},
-          ]
-        : [
-            {'title': 'Simpan di wadah khusus tertutup', 'color': '#F44336'},
-            {'title': 'Jangan campurkan dengan sampah lain', 'color': '#EF5350'},
-            {'title': 'Serahkan ke petugas khusus B3', 'color': '#E57373'},
-          ];
-
-    final scanHistory = ScanHistory(
-      id: scanId,
-      imageUri: imagePath,
-      wasteType: wasteTypes[random],
-      category: categories[random],
-      confidence: 85.0 + (DateTime.now().millisecond % 15),
-      description: 'Hasil pemindaian sampah menggunakan AI',
-      tips: tips.map((e) => Map<String, String>.from(e)).toList(),
-      scanDate: DateTime.now(),
-    );
-
-    // Save to history
-    await _historyService.saveScan(scanHistory);
-
-    // Navigate to result page
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ScanResultPage(
-            imageUri: imagePath,
-            wasteType: scanHistory.wasteType,
-            category: scanHistory.category,
-            confidence: scanHistory.confidence,
-            description: scanHistory.description,
-            tips: scanHistory.tips,
-          ),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: kIsWeb
-          ? _buildWebView()
-          : _isCameraInitialized
-              ? _buildCameraView()
-              : _buildLoadingView(),
-    );
-  }
-
-  Widget _buildWebView() {
-    return SafeArea(
-      child: Column(
-        children: [
-          // Header
-          _buildHeader(),
-
-          // Content
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4CAF50).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 64,
-                        color: Color(0xFF4CAF50),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Kamera tidak tersedia di Web',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Silakan pilih gambar dari galeri',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    ElevatedButton.icon(
-                      onPressed: _pickImageFromGallery,
-                      icon: const Icon(Icons.image),
-                      label: const Text('Pilih dari Galeri'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: _isCameraInitialized
+          ? _buildCameraView()
+          : _buildLoadingView(),
     );
   }
 
   Widget _buildLoadingView() {
-    return SafeArea(
+    return const Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildHeader(),
-          const Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: Color(0xFF4CAF50),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Memuat kamera...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
+          CircularProgressIndicator(
+            color: Color(0xFF4CAF50),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Memuat kamera...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
             ),
           ),
         ],
@@ -377,6 +165,7 @@ class _ScanPageState extends State<ScanPage> {
     }
 
     final size = MediaQuery.of(context).size;
+    final deviceRatio = size.width / size.height;
 
     return Stack(
       children: [
@@ -440,9 +229,9 @@ class _ScanPageState extends State<ScanPage> {
           ),
 
           // Title
-          Text(
-            kIsWeb ? 'Upload Gambar' : 'Pindai Sampah',
-            style: const TextStyle(
+          const Text(
+            'Pindai Sampah',
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.white,

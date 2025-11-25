@@ -3,42 +3,37 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
-  final _nameCtrl = TextEditingController();
+class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  final _confirmPassCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
-    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
-  void _register() async {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulasi proses registrasi
+      // Simulasi proses login
       await Future.delayed(const Duration(seconds: 1));
 
       setState(() => _isLoading = false);
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     }
   }
@@ -48,7 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       body: LoadingOverlay(
         isLoading: _isLoading,
-        message: 'Membuat akun...',
+        message: 'Memproses login...',
         child: GradientBackground(
           child: SafeArea(
             child: SingleChildScrollView(
@@ -58,29 +53,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 40),
 
-                    // Back Button
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.pop(context),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.primary,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Icon
+                    // Logo/Icon
                     Center(
                       child:
                           Container(
-                                width: 100,
-                                height: 100,
+                                width: 120,
+                                height: 120,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
@@ -93,8 +73,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ],
                                 ),
                                 child: const Icon(
-                                  Icons.person_add,
-                                  size: 50,
+                                  Icons.eco,
+                                  size: 60,
                                   color: AppColors.primary,
                                 ),
                               )
@@ -103,12 +83,12 @@ class _RegisterPageState extends State<RegisterPage> {
                               .fadeIn(),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 30),
 
-                    // Title
+                    // Welcome Text
                     Text(
-                          'Daftar Sekarang 🌱',
-                          style: Theme.of(context).textTheme.displaySmall
+                          'Selamat Datang! 🌍',
+                          style: Theme.of(context).textTheme.displayMedium
                               ?.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
@@ -122,8 +102,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 8),
 
                     Text(
-                          'Langkah kecilmu hari ini berarti besar bagi lingkungan',
-                          style: Theme.of(context).textTheme.bodyMedium
+                          'Mari bersama menjaga bumi kita',
+                          style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(color: AppColors.textSecondary),
                           textAlign: TextAlign.center,
                         )
@@ -131,28 +111,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         .fadeIn(delay: 300.ms, duration: 400.ms)
                         .slideY(begin: 0.3, end: 0),
 
-                    const SizedBox(height: 32),
-
-                    // Name Field
-                    TextFormField(
-                          controller: _nameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Nama Lengkap',
-                            hintText: 'masukkan nama lengkap',
-                            prefixIcon: Icon(Icons.person_outline),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Nama tidak boleh kosong';
-                            }
-                            return null;
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: 400.ms, duration: 400.ms)
-                        .slideX(begin: -0.2, end: 0),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 40),
 
                     // Email Field
                     TextFormField(
@@ -174,7 +133,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           },
                         )
                         .animate()
-                        .fadeIn(delay: 500.ms, duration: 400.ms)
+                        .fadeIn(delay: 400.ms, duration: 400.ms)
                         .slideX(begin: -0.2, end: 0),
 
                     const SizedBox(height: 16),
@@ -185,7 +144,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            hintText: 'minimal 6 karakter',
+                            hintText: 'masukkan password Anda',
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -211,60 +170,42 @@ class _RegisterPageState extends State<RegisterPage> {
                           },
                         )
                         .animate()
-                        .fadeIn(delay: 600.ms, duration: 400.ms)
+                        .fadeIn(delay: 500.ms, duration: 400.ms)
                         .slideX(begin: -0.2, end: 0),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                    // Confirm Password Field
-                    TextFormField(
-                          controller: _confirmPassCtrl,
-                          obscureText: _obscureConfirmPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Konfirmasi Password',
-                            hintText: 'ulangi password',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureConfirmPassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
+                    // Forgot Password
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Fitur reset password segera hadir',
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscureConfirmPassword =
-                                      !_obscureConfirmPassword;
-                                });
-                              },
+                              backgroundColor: AppColors.primary,
                             ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Konfirmasi password tidak boleh kosong';
-                            }
-                            if (value != _passCtrl.text) {
-                              return 'Password tidak sama';
-                            }
-                            return null;
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: 700.ms, duration: 400.ms)
-                        .slideX(begin: -0.2, end: 0),
+                          );
+                        },
+                        child: const Text('Lupa Password?'),
+                      ),
+                    ).animate().fadeIn(delay: 600.ms),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-                    // Register Button
+                    // Login Button
                     SizedBox(
                           height: 50,
                           child: EcoButton(
-                            text: 'Daftar',
-                            onPressed: _register,
-                            icon: Icons.app_registration,
+                            text: 'Masuk',
+                            onPressed: _login,
+                            icon: Icons.login,
                           ),
                         )
                         .animate()
-                        .fadeIn(delay: 800.ms, duration: 400.ms)
+                        .fadeIn(delay: 700.ms, duration: 400.ms)
                         .scale(
                           begin: const Offset(0.8, 0.8),
                           end: const Offset(1, 1),
@@ -272,20 +213,41 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 24),
 
-                    // Login Link
+                    // Divider
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'atau',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ).animate().fadeIn(delay: 800.ms),
+
+                    const SizedBox(height: 24),
+
+                    // Register Button
                     EcoCard(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Column(
                             children: [
                               Text(
-                                'Sudah punya akun? ',
+                                'Belum punya akun?',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
+                              const SizedBox(height: 8),
                               TextButton(
-                                onPressed: () => Navigator.pop(context),
+                                onPressed: () =>
+                                    Navigator.pushNamed(context, '/register'),
                                 child: const Text(
-                                  'Masuk',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                  'Daftar Sekarang',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],

@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = false);
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     }
   }
