@@ -15,7 +15,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Trash Detection API")
+app = FastAPI(title="Pilar API")
 
 # CORS middleware untuk koneksi dengan React Native
 app.add_middleware(
@@ -23,12 +23,29 @@ app.add_middleware(
     allow_origins=["*"],  # Izinkan semua origin untuk development
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "Content-Type", "Authorization"],
     expose_headers=["*"],
 )
 
+# Middleware untuk logging requests
+@app.middleware("http")
+async def log_requests(request, call_next):
+    logger.info(f"[REQUEST] {request.method} {request.url.path}")
+    try:
+        response = await call_next(request)
+        logger.info(f"[RESPONSE] {request.method} {request.url.path} - Status: {response.status_code}")
+        return response
+    except Exception as e:
+        logger.error(f"[ERROR] {request.method} {request.url.path} - {str(e)}")
+        raise
+
 # Inisialisasi Supabase client
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+try:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    logger.info("[STARTUP] ✓ Supabase client initialized successfully")
+except Exception as e:
+    logger.error(f"[STARTUP] ✗ Failed to initialize Supabase client: {e}")
+    supabase = None
 
 # Include auth router
 app.include_router(auth_router)
@@ -210,7 +227,7 @@ def get_waste_category(prediction_class: str) -> Dict[str, Any]:
 @app.get("/")
 def root():
     return {
-        "message": "Trash Detection API is ready!",
+        "message": "Pilar API is ready!",
         "model_loaded": model is not None,
         "endpoints": {
             "predict": "/api/predict",

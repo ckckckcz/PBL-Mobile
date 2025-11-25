@@ -1,4 +1,4 @@
-# Trash Detection Backend API
+# Pilar Backend API
 
 Backend API untuk deteksi jenis sampah menggunakan FastAPI dan machine learning model.
 
@@ -75,7 +75,7 @@ GET /
 **Response:**
 ```json
 {
-  "message": "Trash Detection API is ready!",
+  "message": "Pilar API is ready!",
   "model_loaded": true,
   "endpoints": {
     "predict": "/api/predict",
@@ -182,7 +182,7 @@ API dapat mendeteksi 3 kategori sampah:
 
 Untuk mengakses API dari React Native:
 
-1. **Android Emulator:** `http://10.0.2.2:8000`
+1. **Android Emulator:** `http://127.0.0.1:80000`
 2. **iOS Simulator:** `http://localhost:8000`
 3. **Physical Device:** `http://<YOUR_LOCAL_IP>:8000`
 
@@ -195,7 +195,7 @@ formData.append('file', {
   type: 'image/jpeg',
 });
 
-const response = await fetch('http://10.0.2.2:8000/api/predict', {
+const response = await fetch('http://127.0.0.1:80000/api/predict', {
   method: 'POST',
   body: formData,
 });
