@@ -322,6 +322,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Container(
                     width: 70,
                     height: 70,
+                    padding: const EdgeInsets.all(14),
                     color: const Color(0xFFF5F5F5),
                     child: _buildHistoryImage(scan),
                   ),
