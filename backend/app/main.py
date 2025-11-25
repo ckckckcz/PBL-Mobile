@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 from .config import SUPABASE_URL, SUPABASE_KEY
+from .auth import router as auth_router
 import joblib
 import numpy as np
 from PIL import Image
@@ -29,64 +30,13 @@ app.add_middleware(
 # Inisialisasi Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# Include auth router
+app.include_router(auth_router)
+
 # Load model saat startup
-BASE_DIR = Path(__file__).resolve().parent.parent 
+BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "model" / "model_sampah_hybrid_final.pkl"
 model = None
-
-"""
-================================================================================
-TRASH DETECTION MODEL PIPELINE
-================================================================================
-
-Model Type: Hybrid XGBoost Classifier (Trained with scikit-learn 1.6.1)
-
-FEATURE EXTRACTION PIPELINE:
-1. Input Image → Resize to 16x16 pixels
-2. Convert RGB to Grayscale
-3. Flatten & sample every 8th pixel → 32 base features
-4. KMeans.transform() on 32 features → 200 cluster distances
-   - 200 clusters pre-trained during model training
-   - Each distance represents distance to cluster center
-5. Concatenate: [32 features] + [200 KMeans distances] = 232 total
-6. Pad with zeros to 712 features (StandardScaler requirement)
-
-SCALING & PREDICTION:
-7. StandardScaler.transform() on 712 features (fitted during training)
-8. XGBoost.predict() → returns class index [0, 1, 2]
-   - 0 = Sampah Organik (Organic Waste)
-   - 1 = Sampah Anorganik (Inorganic Waste)
-   - 2 = Sampah B3 (Hazardous Waste)
-9. XGBoost.predict_proba() → probability for each class
-10. Confidence = max(probabilities) × 100
-
-OUTPUT CONFIDENCE:
-- Comes from: XGBoost predict_proba() output
-- Range: 0-100%
-- Interpretation: Probability of predicted class
-- Issue: Always high (~96%+) indicates model may be overfitted
-         Only reliably detects "Sampah Organik"
-
-MODEL COMPONENTS (model_sampah_hybrid_final.pkl):
-- kmeans_model: MiniBatchKMeans (200 clusters, 32 input features)
-- scaler_model: StandardScaler (712 input features)
-- xgb_model: XGBClassifier (3 classes)
-- vocab_size: 200 (number of clusters)
-- orb_n_features: 500 (metadata about training)
-
-KNOWN ISSUES:
-✗ Accuracy stuck at ~96% regardless of input
-✗ Only detects "Sampah Organik" correctly
-✗ scikit-learn version mismatch: trained on 1.6.1, runtime 1.7.1
-
-RECOMMENDATIONS:
-→ Retrain model with balanced dataset
-→ Augment training images
-→ Use stratified cross-validation
-→ Validate with proper test set
-→ Consider class weight balancing
-================================================================================
-"""
 
 @app.on_event("startup")
 async def load_model():
@@ -94,14 +44,14 @@ async def load_model():
     try:
         logger.info(f"[STARTUP] Loading XGBoost Hybrid model from: {MODEL_PATH}")
         logger.info(f"[STARTUP] Model exists: {MODEL_PATH.exists()}")
-        
+
         model = joblib.load(MODEL_PATH)
-        
+
         logger.info(f"[STARTUP] ✓ Model loaded successfully!")
         logger.info(f"[STARTUP] Model type: {type(model)}")
         if isinstance(model, dict):
             logger.info(f"[STARTUP] Model components: {list(model.keys())}")
-        
+
     except Exception as e:
         logger.error(f"[STARTUP] ✗ Error loading model: {e}")
         logger.exception(e)
@@ -194,30 +144,30 @@ def preprocess_image(image: Image.Image, target_size=(16, 16)) -> np.ndarray:
 
         # Convert to numpy array
         img_array = np.array(image, dtype=np.uint8)
-        
+
         # Convert RGB to grayscale
         if len(img_array.shape) == 3:
             img_gray = 0.299 * img_array[:,:,0].astype(np.float32) + 0.587 * img_array[:,:,1].astype(np.float32) + 0.114 * img_array[:,:,2].astype(np.float32)
             img_gray = img_gray.astype(np.uint8)
         else:
             img_gray = img_array
-        
+
         # Flatten image (16x16 = 256 pixels), then reduce to 32 features
         # by taking every 8th element (256/8 = 32)
         img_flat = img_gray.flatten().astype(np.float32) / 255.0
         features_32 = img_flat[::8]  # Take every 8th element to get 32 features
-        
+
         # Ensure exactly 32 features
         if len(features_32) > 32:
             features_32 = features_32[:32]
         elif len(features_32) < 32:
             features_32 = np.pad(features_32, (0, 32 - len(features_32)), mode='constant')
-        
+
         # Reshape untuk model: (1, 32)
         features_32 = features_32.reshape(1, -1)
-        
+
         logger.info(f"[PREPROCESS] Features shape: {features_32.shape}, n_features: {features_32.shape[1]}")
-        
+
         return features_32
     except Exception as e:
         logger.error(f"Error preprocessing image: {e}")
@@ -233,7 +183,7 @@ def get_waste_category(prediction_class: str) -> Dict[str, Any]:
         "Sampah Anorganik": "Sampah Anorganik",
         "Sampah B3": "Sampah B3"
     }
-    
+
     # Jika prediction_class sudah dalam mapping, gunakan langsung
     if prediction_class in category_mapping:
         category = category_mapping[prediction_class]
@@ -330,34 +280,34 @@ async def predict_waste(file: UploadFile = File(...)):
 
         # Use pipeline untuk prediksi
         logger.info("[PREDICT] Running XGBoost Hybrid Model prediction...")
-        
+
         # Extract model components
         kmeans = model['kmeans_model']
         scaler = model['scaler_model']
         xgb = model['xgb_model']
-        
+
         # Feature engineering: KMeans clustering pada 32 features
         logger.info("[PREDICT] Applying KMeans clustering...")
         # KMeans.transform() gives distances to cluster centers (200 features)
         kmeans_features = kmeans.transform(processed_image)
         logger.info(f"[PREDICT] KMeans features shape: {kmeans_features.shape}")
-        
+
         # Combine original 32 features with KMeans 200 features = 232 features
         # But scaler expects 712 features, so we need 480 more features
         # Let's create additional features: image stats, histograms, etc.
         combined_features = np.concatenate([processed_image, kmeans_features], axis=1)
-        
+
         # Pad to 712 features with zeros
         if combined_features.shape[1] < 712:
             padding = np.zeros((1, 712 - combined_features.shape[1]))
             combined_features = np.concatenate([combined_features, padding], axis=1)
-        
+
         logger.info(f"[PREDICT] Combined features shape: {combined_features.shape}")
-        
+
         # Scale features
         logger.info("[PREDICT] Scaling features...")
         scaled_features = scaler.transform(combined_features)
-        
+
         # Predict with XGBoost
         logger.info("[PREDICT] XGBoost predicting...")
         prediction = xgb.predict(scaled_features)
@@ -381,10 +331,10 @@ async def predict_waste(file: UploadFile = File(...)):
         # Map integer prediction ke class name
         class_mapping = {
             0: "Sampah Organik",
-            1: "Sampah Anorganik", 
+            1: "Sampah Anorganik",
             2: "Sampah B3"
         }
-        
+
         pred_idx = int(prediction[0])
         prediction_class = class_mapping.get(pred_idx, "Unknown")
         logger.info(f"[PREDICT] Prediction class: {prediction_class}")
