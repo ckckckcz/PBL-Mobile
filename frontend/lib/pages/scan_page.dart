@@ -204,48 +204,37 @@ class _ScanPageState extends State<ScanPage> {
     // Generate dummy scan result data
     final scanId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    // Simulate different waste types
-    final wasteTypes = ['Sampah Organik', 'Sampah Anorganik', 'Sampah B3'];
-    final categories = ['Organik', 'Anorganik', 'B3'];
-    final random = DateTime.now().second % 3;
+    // Specific waste types with their categories
+    final wasteTypeMap = {
+      0: {'type': 'Botol Kaca', 'category': 'Anorganik'},
+      1: {'type': 'Daun Kering', 'category': 'Organik'},
+    };
+    final random = DateTime.now().second % 2;
+    final selectedWaste = wasteTypeMap[random]!;
+    final wasteType = selectedWaste['type']!;
+    final category = selectedWaste['category']!;
 
-    final tips = random == 0
-        ? [
-            {'title': 'Pisahkan dari sampah lainnya', 'color': '#4CAF50'},
-            {'title': 'Bisa dijadikan kompos', 'color': '#66BB6A'},
-            {'title': 'Manfaatkan untuk pupuk tanaman', 'color': '#81C784'},
-          ]
-        : random == 1
-            ? [
-                {
-                  'title': 'Cuci dan keringkan sebelum didaur ulang',
-                  'color': '#2196F3'
-                },
-                {
-                  'title': 'Pisahkan berdasarkan jenis material',
-                  'color': '#42A5F5'
-                },
-                {'title': 'Kirim ke bank sampah terdekat', 'color': '#64B5F6'},
-              ]
-            : [
-                {
-                  'title': 'Simpan di wadah khusus tertutup',
-                  'color': '#F44336'
-                },
-                {
-                  'title': 'Jangan campurkan dengan sampah lain',
-                  'color': '#EF5350'
-                },
-                {'title': 'Serahkan ke petugas khusus B3', 'color': '#E57373'},
-              ];
+    final tips = [
+      {
+        'title': 'Bersihkan sampah anorganik sebelum dibuang',
+        'color': '#4CAF50'
+      },
+      {'title': 'Pisahkan plastik, kaca, dan logam', 'color': '#66BB6A'},
+      {'title': 'Gunakan ulang wadah yang masih layak', 'color': '#81C784'},
+      {'title': 'Tekan plastik/kardus agar hemat ruang', 'color': '#81C784'},
+      {'title': 'Setorkan ke bank sampah terdekat', 'color': '#81C784'},
+    ];
+
+    final now = DateTime.now();
+    final dateFormatter = '${now.day} ${_getMonthName(now.month)} ${now.year}';
 
     final scanHistory = ScanHistory(
       id: scanId,
       imageUri: imagePath,
-      wasteType: wasteTypes[random],
-      category: categories[random],
+      wasteType: wasteType,
+      category: category,
       confidence: 85.0 + (DateTime.now().millisecond % 15),
-      description: 'Hasil pemindaian sampah menggunakan AI',
+      description: 'Dipindai: $dateFormatter',
       tips: tips.map((e) => Map<String, String>.from(e)).toList(),
       scanDate: DateTime.now(),
     );
@@ -333,7 +322,8 @@ class _ScanPageState extends State<ScanPage> {
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
                       onPressed: _pickImageFromGallery,
-                      icon: Icon(PhosphorIcons.image(PhosphorIconsStyle.regular)),
+                      icon:
+                          Icon(PhosphorIcons.image(PhosphorIconsStyle.regular)),
                       label: const Text('Pilih dari Galeri'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4CAF50),
@@ -680,5 +670,22 @@ class _ScanPageState extends State<ScanPage> {
       ),
     );
   }
-}
 
+  String _getMonthName(int month) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
+    ];
+    return months[month - 1];
+  }
+}

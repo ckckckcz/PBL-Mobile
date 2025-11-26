@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../widgets/scan_result_widgets.dart';
-
-/// Refactored Scan Result Page with Clean Architecture
-/// Uses extracted widgets for better code organization
 class ScanResultPage extends StatefulWidget {
   final String? imageUri;
   final String? wasteType;

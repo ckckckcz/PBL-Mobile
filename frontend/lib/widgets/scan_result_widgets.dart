@@ -265,7 +265,7 @@ class TipsSection extends StatelessWidget {
       'Tips Pengelolaan',
       style: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w900,
         color: AppColors.textPrimary,
       ),
     );
@@ -338,7 +338,10 @@ class TipItem extends StatelessWidget {
   ];
 
   String _getTipImage(int index) {
-    return _tipImages[index % _tipImages.length];
+    if (index < 0 || index >= _tipImages.length) {
+      return _tipImages[0];
+    }
+    return _tipImages[index];
   }
 
   Color _parseColor(String colorString) {
@@ -376,18 +379,24 @@ class TipItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
-      child: Image.asset(
-        _getTipImage(index),
-        width: 24,
-        height: 24,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(
-            PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
-            color: parsedColor,
-            size: 20,
-          );
-        },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset(
+          _getTipImage(index),
+          width: 24,
+          height: 24,
+          fit: BoxFit.cover,
+          package: null,
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint(
+                'Failed to load image: ${_getTipImage(index)}, Error: $error');
+            return Icon(
+              PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
+              color: parsedColor,
+              size: 20,
+            );
+          },
+        ),
       ),
     );
   }

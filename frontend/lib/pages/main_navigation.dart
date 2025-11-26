@@ -37,7 +37,6 @@ class _MainNavigationState extends State<MainNavigation> {
     // If scan button is tapped, navigate to fullscreen scan page
     if (index == 1) {
       Navigator.pushNamed(context, '/scan').then((_) {
-        // After returning from scan page, keep current index unchanged
         setState(() {});
       });
       return;
@@ -79,8 +78,8 @@ class _MainNavigationState extends State<MainNavigation> {
                   index: 0,
                 ),
                 _buildNavItem(
-                  icon: PhosphorIcons.qrCode(PhosphorIconsStyle.regular),
-                  activeIcon: PhosphorIcons.qrCode(PhosphorIconsStyle.fill),
+                  icon: PhosphorIcons.scan(PhosphorIconsStyle.regular),
+                  activeIcon: PhosphorIcons.scan(PhosphorIconsStyle.fill),
                   label: 'Pindai',
                   index: 1,
                 ),
