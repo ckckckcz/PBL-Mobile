@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 
@@ -55,8 +56,8 @@ class AboutAppPage extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(
-          Icons.arrow_back,
+        child: Icon(
+          PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
           color: AppColors.textPrimary,
           size: 24,
         ),
@@ -193,7 +194,7 @@ class AboutAppPage extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.info_outline,
+                PhosphorIcons.info(PhosphorIconsStyle.regular),
                 color: AppColors.primary,
                 size: 20,
               ),
@@ -271,3 +272,4 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 }
+

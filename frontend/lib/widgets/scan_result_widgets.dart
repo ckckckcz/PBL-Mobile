@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../utils/image_helper.dart';
 
@@ -197,8 +198,8 @@ class ScannedImageCard extends StatelessWidget {
     return Container(
       color: AppColors.surfaceVariant,
       alignment: Alignment.center,
-      child: const Icon(
-        Icons.image,
+      child: Icon(
+        PhosphorIcons.image(PhosphorIconsStyle.regular),
         size: 64,
         color: AppColors.textTertiary,
       ),
@@ -212,8 +213,8 @@ class ScannedImageCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.image_not_supported,
+          Icon(
+            PhosphorIcons.image(PhosphorIconsStyle.regular),
             size: 64,
             color: AppColors.textTertiary,
           ),
@@ -382,7 +383,7 @@ class TipItem extends StatelessWidget {
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
           return Icon(
-            Icons.lightbulb_outline,
+            PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
             color: parsedColor,
             size: 20,
           );

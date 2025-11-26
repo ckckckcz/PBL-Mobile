@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../widgets/scan_result_widgets.dart';
 
@@ -123,11 +124,12 @@ class _ScanResultPageState extends State<ScanResultPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.code, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('Developer Mode'),
+            Icon(PhosphorIcons.code(PhosphorIconsStyle.regular),
+                color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text('Developer Mode'),
           ],
         ),
         content: SingleChildScrollView(

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/scan_history_model.dart';
 import '../services/scan_history_service.dart';
 import 'scan_result.dart';
@@ -47,7 +48,8 @@ class _ScanPageState extends State<ScanPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Izin kamera diperlukan untuk menggunakan fitur scan'),
+              content:
+                  Text('Izin kamera diperlukan untuk menggunakan fitur scan'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -136,7 +138,8 @@ class _ScanPageState extends State<ScanPage> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Izin storage diperlukan untuk mengakses galeri'),
+                  content:
+                      Text('Izin storage diperlukan untuk mengakses galeri'),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -152,7 +155,8 @@ class _ScanPageState extends State<ScanPage> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Izin akses foto diperlukan untuk mengakses galeri'),
+                  content:
+                      Text('Izin akses foto diperlukan untuk mengakses galeri'),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -212,16 +216,28 @@ class _ScanPageState extends State<ScanPage> {
             {'title': 'Manfaatkan untuk pupuk tanaman', 'color': '#81C784'},
           ]
         : random == 1
-        ? [
-            {'title': 'Cuci dan keringkan sebelum didaur ulang', 'color': '#2196F3'},
-            {'title': 'Pisahkan berdasarkan jenis material', 'color': '#42A5F5'},
-            {'title': 'Kirim ke bank sampah terdekat', 'color': '#64B5F6'},
-          ]
-        : [
-            {'title': 'Simpan di wadah khusus tertutup', 'color': '#F44336'},
-            {'title': 'Jangan campurkan dengan sampah lain', 'color': '#EF5350'},
-            {'title': 'Serahkan ke petugas khusus B3', 'color': '#E57373'},
-          ];
+            ? [
+                {
+                  'title': 'Cuci dan keringkan sebelum didaur ulang',
+                  'color': '#2196F3'
+                },
+                {
+                  'title': 'Pisahkan berdasarkan jenis material',
+                  'color': '#42A5F5'
+                },
+                {'title': 'Kirim ke bank sampah terdekat', 'color': '#64B5F6'},
+              ]
+            : [
+                {
+                  'title': 'Simpan di wadah khusus tertutup',
+                  'color': '#F44336'
+                },
+                {
+                  'title': 'Jangan campurkan dengan sampah lain',
+                  'color': '#EF5350'
+                },
+                {'title': 'Serahkan ke petugas khusus B3', 'color': '#E57373'},
+              ];
 
     final scanHistory = ScanHistory(
       id: scanId,
@@ -289,8 +305,8 @@ class _ScanPageState extends State<ScanPage> {
                         color: const Color(0xFF4CAF50).withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
+                      child: Icon(
+                        PhosphorIcons.camera(PhosphorIconsStyle.regular),
                         size: 64,
                         color: Color(0xFF4CAF50),
                       ),
@@ -317,7 +333,7 @@ class _ScanPageState extends State<ScanPage> {
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
                       onPressed: _pickImageFromGallery,
-                      icon: const Icon(Icons.image),
+                      icon: Icon(PhosphorIcons.image(PhosphorIconsStyle.regular)),
                       label: const Text('Pilih dari Galeri'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4CAF50),
@@ -431,8 +447,8 @@ class _ScanPageState extends State<ScanPage> {
                 color: Colors.black.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.arrow_back,
+              child: Icon(
+                PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
                 color: Colors.white,
                 size: 24,
               ),
@@ -594,8 +610,8 @@ class _ScanPageState extends State<ScanPage> {
                 color: Colors.white.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.image,
+              child: Icon(
+                PhosphorIcons.image(PhosphorIconsStyle.regular),
                 color: Colors.white,
                 size: 28,
               ),
@@ -652,7 +668,9 @@ class _ScanPageState extends State<ScanPage> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                _isFlashOn
+                    ? PhosphorIcons.lightning(PhosphorIconsStyle.fill)
+                    : PhosphorIcons.lightning(PhosphorIconsStyle.regular),
                 color: Colors.white,
                 size: 28,
               ),
@@ -663,3 +681,4 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 }
+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../models/scan_history_model.dart';
@@ -116,8 +117,8 @@ class HistoryEmptyState extends StatelessWidget {
         color: AppColors.primary.withOpacity(0.1),
         shape: BoxShape.circle,
       ),
-      child: const Icon(
-        Icons.history,
+      child: Icon(
+        PhosphorIcons.clockCounterClockwise(PhosphorIconsStyle.regular),
         size: 64,
         color: AppColors.primary,
       ),
@@ -337,8 +338,8 @@ class HistoryItem extends StatelessWidget {
   Widget _buildDateInfo() {
     return Row(
       children: [
-        const Icon(
-          Icons.calendar_today,
+        Icon(
+          PhosphorIcons.calendar(PhosphorIconsStyle.regular),
           size: 12,
           color: AppColors.textTertiary,
         ),
@@ -357,8 +358,8 @@ class HistoryItem extends StatelessWidget {
   Widget _buildConfidenceInfo() {
     return Row(
       children: [
-        const Icon(
-          Icons.verified,
+        Icon(
+          PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
           size: 12,
           color: AppColors.success,
         ),
@@ -416,3 +417,4 @@ class HistoryDialogs {
     );
   }
 }
+

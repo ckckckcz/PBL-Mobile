@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'about_app.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -51,8 +52,8 @@ class ProfilePage extends StatelessWidget {
                           color: const Color(0xFF4CAF50),
                           borderRadius: BorderRadius.circular(35),
                         ),
-                        child: const Icon(
-                          Icons.person,
+                        child: Icon(
+                          PhosphorIcons.user(PhosphorIconsStyle.regular),
                           color: Colors.white,
                           size: 40,
                         ),
@@ -122,7 +123,7 @@ class ProfilePage extends StatelessWidget {
                 // Edit Profile Button
                 _buildMenuItem(
                   context,
-                  icon: Icons.edit_outlined,
+                  icon: PhosphorIcons.pencilSimple(PhosphorIconsStyle.regular),
                   title: 'Edit Profil',
                   onTap: () {
                     // TODO: Navigate to edit profile
@@ -134,7 +135,7 @@ class ProfilePage extends StatelessWidget {
                 // Settings Button
                 _buildMenuItem(
                   context,
-                  icon: Icons.settings_outlined,
+                  icon: PhosphorIcons.gear(PhosphorIconsStyle.regular),
                   title: 'Pengaturan',
                   onTap: () {
                     // TODO: Navigate to settings
@@ -146,7 +147,7 @@ class ProfilePage extends StatelessWidget {
                 // Privacy Policy Button
                 _buildMenuItem(
                   context,
-                  icon: Icons.privacy_tip_outlined,
+                  icon: PhosphorIcons.shieldCheck(PhosphorIconsStyle.regular),
                   title: 'Kebijakan Privasi',
                   onTap: () {
                     // TODO: Navigate to privacy policy
@@ -158,7 +159,7 @@ class ProfilePage extends StatelessWidget {
                 // Logout Button
                 _buildMenuItem(
                   context,
-                  icon: Icons.logout,
+                  icon: PhosphorIcons.signOut(PhosphorIconsStyle.regular),
                   title: 'Keluar',
                   isDestructive: true,
                   onTap: () {
@@ -222,9 +223,7 @@ class ProfilePage extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isDestructive
-                    ? Colors.red
-                    : const Color(0xFF4CAF50),
+                color: isDestructive ? Colors.red : const Color(0xFF4CAF50),
                 size: 24,
               ),
               const SizedBox(width: 16),
@@ -234,17 +233,13 @@ class ProfilePage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: isDestructive
-                        ? Colors.red
-                        : const Color(0xFF2E3A2F),
+                    color: isDestructive ? Colors.red : const Color(0xFF2E3A2F),
                   ),
                 ),
               ),
               Icon(
-                Icons.chevron_right,
-                color: isDestructive
-                    ? Colors.red
-                    : const Color(0xFF607D6B),
+                PhosphorIcons.caretRight(PhosphorIconsStyle.regular),
+                color: isDestructive ? Colors.red : const Color(0xFF607D6B),
                 size: 24,
               ),
             ],
@@ -283,8 +278,8 @@ class ProfilePage extends StatelessWidget {
                 height: 24,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.info_outline,
+                  return Icon(
+                    PhosphorIcons.info(PhosphorIconsStyle.regular),
                     color: Color(0xFF4CAF50),
                     size: 24,
                   );
@@ -301,8 +296,8 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
+              Icon(
+                PhosphorIcons.caretRight(PhosphorIconsStyle.regular),
                 color: Color(0xFF607D6B),
                 size: 24,
               ),
@@ -313,3 +308,4 @@ class ProfilePage extends StatelessWidget {
     );
   }
 }
+

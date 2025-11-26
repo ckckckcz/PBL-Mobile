@@ -61,8 +61,8 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.background,
 
-      // Typography dengan Google Fonts
-      textTheme: GoogleFonts.poppinsTextTheme(
+      // Typography dengan Google Fonts - Inter
+      textTheme: GoogleFonts.interTextTheme(
         const TextTheme(
           displayLarge: TextStyle(
             fontSize: 32,
@@ -110,7 +110,7 @@ class AppTheme {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textPrimary,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -135,7 +135,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -146,7 +146,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.poppins(
+          textStyle: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -177,7 +177,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.error),
         ),
-        labelStyle: GoogleFonts.poppins(color: AppColors.textSecondary),
+        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
       ),
 
       // Icon Theme

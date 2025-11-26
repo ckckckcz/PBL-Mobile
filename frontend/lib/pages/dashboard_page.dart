@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/eco_tips_carousel.dart';
@@ -30,13 +31,13 @@ class _DashboardPageState extends State<DashboardPage> {
         title: const Text('Dashboard'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: Icon(PhosphorIcons.bell(PhosphorIconsStyle.regular)),
             onPressed: () {
               _showNotificationBottomSheet(context);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: Icon(PhosphorIcons.gear(PhosphorIconsStyle.regular)),
             onPressed: () {
               _showSettingsBottomSheet(context);
             },
@@ -92,16 +93,16 @@ class _DashboardPageState extends State<DashboardPage> {
                   Text(
                     'Tips Ramah Lingkungan 🌿',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ).animate().fadeIn(delay: 400.ms),
 
                   const SizedBox(height: 12),
 
                   const EcoTipsCarousel().animate().fadeIn(
-                    delay: 500.ms,
-                    duration: 400.ms,
-                  ),
+                        delay: 500.ms,
+                        duration: 400.ms,
+                      ),
 
                   const SizedBox(height: 24),
 
@@ -112,8 +113,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       Text(
                         'Edukasi Lingkungan 📚',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       TextButton(
                         onPressed: () {
@@ -145,16 +146,15 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-      floatingActionButton:
-          FloatingActionButton.extended(
-                onPressed: () => Navigator.pushNamed(context, '/scan'),
-                backgroundColor: AppColors.primary,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Scan'),
-              )
-              .animate()
-              .fadeIn(delay: 800.ms, duration: 400.ms)
-              .scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, '/scan'),
+        backgroundColor: AppColors.primary,
+        icon: Icon(PhosphorIcons.camera(PhosphorIconsStyle.regular)),
+        label: const Text('Scan'),
+      )
+          .animate()
+          .fadeIn(delay: 800.ms, duration: 400.ms)
+          .scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1)),
     );
   }
 
@@ -176,14 +176,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 Text(
                   'Kamu telah membantu mengurangi sampah sebanyak $wasteDetected item!',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        color: AppColors.textSecondary,
+                      ),
                 ),
                 const SizedBox(height: 12),
                 EcoButton(
                   text: 'Lihat Profile',
                   onPressed: () => Navigator.pushNamed(context, '/profile'),
-                  icon: Icons.person,
+                  icon: PhosphorIcons.user(PhosphorIconsStyle.regular),
                 ),
               ],
             ),
@@ -196,7 +196,8 @@ class _DashboardPageState extends State<DashboardPage> {
               color: AppColors.primaryLight.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.eco, size: 30, color: AppColors.primary),
+            child: Icon(PhosphorIcons.leaf(PhosphorIconsStyle.regular),
+                size: 30, color: AppColors.primary),
           ),
         ],
       ),
@@ -220,7 +221,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: StatCard(
                 title: 'Total Scan',
                 value: '$wasteDetected',
-                icon: Icons.photo_camera,
+                icon: PhosphorIcons.camera(PhosphorIconsStyle.regular),
                 iconColor: AppColors.primary,
               ),
             ),
@@ -229,7 +230,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: StatCard(
                 title: 'Organik',
                 value: '$organicWaste',
-                icon: Icons.grass,
+                icon: PhosphorIcons.plant(PhosphorIconsStyle.regular),
                 iconColor: AppColors.success,
               ),
             ),
@@ -239,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
         StatCard(
           title: 'Anorganik',
           value: '$inorganicWaste',
-          icon: Icons.recycling,
+          icon: PhosphorIcons.recycle(PhosphorIconsStyle.regular),
           iconColor: AppColors.accentBlue,
         ),
       ],
@@ -261,7 +262,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Expanded(
               child: _buildActionButton(
-                icon: Icons.camera_alt,
+                icon: PhosphorIcons.camera(PhosphorIconsStyle.regular),
                 label: 'Scan',
                 color: AppColors.primary,
                 onTap: () => Navigator.pushNamed(context, '/scan'),
@@ -270,7 +271,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionButton(
-                icon: Icons.history,
+                icon: PhosphorIcons.clockCounterClockwise(PhosphorIconsStyle.regular),
                 label: 'Riwayat',
                 color: AppColors.accentBlue,
                 onTap: () {
@@ -357,24 +358,26 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 20),
                     Text(
                       article.title,
-                      style: Theme.of(context).textTheme.headlineMedium
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       article.description,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        height: 1.6,
-                        color: AppColors.textSecondary,
-                      ),
+                            height: 1.6,
+                            color: AppColors.textSecondary,
+                          ),
                     ),
                     const SizedBox(height: 24),
                     EcoCard(
                       color: AppColors.primaryLight.withOpacity(0.1),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.lightbulb_outline,
+                          Icon(
+                            PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
                             color: AppColors.primary,
                           ),
                           const SizedBox(width: 12),
@@ -474,8 +477,8 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Icon(
-              Icons.notifications_outlined,
+            Icon(
+              PhosphorIcons.bell(PhosphorIconsStyle.regular),
               size: 60,
               color: AppColors.primary,
             ),
@@ -523,18 +526,20 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.person, color: AppColors.primary),
+              leading:
+                  Icon(PhosphorIcons.user(PhosphorIconsStyle.regular), color: AppColors.primary),
               title: const Text('Profile'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: Icon(PhosphorIcons.caretRight(PhosphorIconsStyle.regular), size: 16),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/profile');
               },
             ),
             ListTile(
-              leading: const Icon(Icons.language, color: AppColors.primary),
+              leading:
+                  Icon(PhosphorIcons.globe(PhosphorIconsStyle.regular), color: AppColors.primary),
               title: const Text('Bahasa'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: Icon(PhosphorIcons.caretRight(PhosphorIconsStyle.regular), size: 16),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -546,7 +551,8 @@ class _DashboardPageState extends State<DashboardPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.error),
+              leading:
+                  Icon(PhosphorIcons.signOut(PhosphorIconsStyle.regular), color: AppColors.error),
               title: const Text('Keluar'),
               onTap: () {
                 Navigator.pop(context);
@@ -560,3 +566,5 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
+
+

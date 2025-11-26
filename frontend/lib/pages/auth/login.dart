@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../services/api_service.dart';
@@ -189,8 +190,8 @@ class _LoginPageState extends State<LoginPage> {
             width: 2,
           ),
         ),
-        child: const Icon(
-          Icons.arrow_back,
+        child: PhosphorIcon(
+          PhosphorIconsRegular.arrowLeft,
           color: Colors.white,
           size: 18,
         ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-/// App color constants
-/// Centralized color management for consistent theming
 class AppColors {
   // Private constructor to prevent instantiation
   AppColors._();
@@ -75,15 +74,15 @@ class AppColors {
     switch (category.toLowerCase()) {
       case 'organik':
       case 'organic':
-        return Icons.eco;
+        return PhosphorIcons.leaf(PhosphorIconsStyle.regular);
       case 'anorganik':
       case 'inorganic':
-        return Icons.recycling;
+        return PhosphorIcons.recycle(PhosphorIconsStyle.regular);
       case 'b3':
       case 'hazardous':
-        return Icons.warning;
+        return PhosphorIcons.warningCircle(PhosphorIconsStyle.regular);
       default:
-        return Icons.help_outline;
+        return PhosphorIcons.question(PhosphorIconsStyle.regular);
     }
   }
 }

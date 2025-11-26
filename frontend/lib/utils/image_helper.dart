@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Image helper utility functions
 /// Centralized image handling logic
@@ -53,8 +54,8 @@ class ImageHelper {
           width: width,
           height: height,
           color: Colors.grey[200],
-          child: const Icon(
-            Icons.image_not_supported,
+          child: Icon(
+            PhosphorIcons.image(PhosphorIconsStyle.regular),
             color: Colors.grey,
             size: 48,
           ),
@@ -142,7 +143,7 @@ class ImageHelper {
                 height: size,
                 color: Colors.grey[200],
                 child: Icon(
-                  Icons.person,
+                  PhosphorIcons.user(PhosphorIconsStyle.regular),
                   color: Colors.grey,
                   size: size * 0.6,
                 ),

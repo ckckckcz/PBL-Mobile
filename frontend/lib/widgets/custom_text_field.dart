@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -61,162 +62,185 @@ class CustomTextField extends StatefulWidget {
     this.initialValue,
   }) : super(key: key);
 
-  const CustomTextField.email({
+  factory CustomTextField.email({
     Key? key,
-    this.controller,
-    this.label = 'Email',
-    this.hint = 'Masukkan email Anda',
-    this.validator,
-    this.enabled = true,
-    this.prefixIcon = const Icon(Icons.email_outlined),
-    this.suffixIcon,
-    this.onChanged,
-    this.onSubmitted,
-    this.focusNode,
-    this.autofocus = false,
-    this.textInputAction = TextInputAction.next,
-  })  : keyboardType = TextInputType.emailAddress,
-        obscureText = false,
-        readOnly = false,
-        maxLines = 1,
-        maxLength = null,
-        prefixText = null,
-        suffixText = null,
-        contentPadding = const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        onTap = null,
-        inputFormatters = null,
-        showCounter = false,
-        textCapitalization = TextCapitalization.none,
-        initialValue = null,
-        super(key: key);
+    TextEditingController? controller,
+    String label = 'Email',
+    String hint = 'Masukkan email Anda',
+    String? Function(String?)? validator,
+    bool enabled = true,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    void Function(String)? onChanged,
+    void Function(String)? onSubmitted,
+    FocusNode? focusNode,
+    bool autofocus = false,
+    TextInputAction textInputAction = TextInputAction.next,
+  }) {
+    return CustomTextField(
+      key: key,
+      controller: controller,
+      label: label,
+      hint: hint,
+      validator: validator,
+      enabled: enabled,
+      prefixIcon: prefixIcon ??
+          PhosphorIcon(
+            PhosphorIconsRegular.envelope,
+            size: 20,
+          ),
+      suffixIcon: suffixIcon,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      textInputAction: textInputAction,
+      keyboardType: TextInputType.emailAddress,
+    );
+  }
 
-  const CustomTextField.password({
+  factory CustomTextField.password({
     Key? key,
-    this.controller,
-    this.label = 'Password',
-    this.hint = 'Masukkan password Anda',
-    this.validator,
-    this.enabled = true,
-    this.prefixIcon = const Icon(Icons.lock_outline),
-    this.suffixIcon,
-    this.onChanged,
-    this.onSubmitted,
-    this.focusNode,
-    this.autofocus = false,
-    this.textInputAction = TextInputAction.done,
-  })  : keyboardType = TextInputType.visiblePassword,
-        obscureText = true,
-        readOnly = false,
-        maxLines = 1,
-        maxLength = null,
-        prefixText = null,
-        suffixText = null,
-        contentPadding = const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        onTap = null,
-        inputFormatters = null,
-        showCounter = false,
-        textCapitalization = TextCapitalization.none,
-        initialValue = null,
-        super(key: key);
+    TextEditingController? controller,
+    String label = 'Password',
+    String hint = 'Masukkan password Anda',
+    String? Function(String?)? validator,
+    bool enabled = true,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    void Function(String)? onChanged,
+    void Function(String)? onSubmitted,
+    FocusNode? focusNode,
+    bool autofocus = false,
+    TextInputAction textInputAction = TextInputAction.done,
+  }) {
+    return CustomTextField(
+      key: key,
+      controller: controller,
+      label: label,
+      hint: hint,
+      validator: validator,
+      enabled: enabled,
+      prefixIcon: prefixIcon ??
+          PhosphorIcon(
+            PhosphorIconsRegular.lock,
+            size: 20,
+          ),
+      suffixIcon: suffixIcon,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      textInputAction: textInputAction,
+      keyboardType: TextInputType.visiblePassword,
+      obscureText: true,
+    );
+  }
 
-  const CustomTextField.phone({
+  factory CustomTextField.phone({
     Key? key,
-    this.controller,
-    this.label = 'Nomor Telepon',
-    this.hint = 'Masukkan nomor telepon',
-    this.validator,
-    this.enabled = true,
-    this.prefixIcon = const Icon(Icons.phone_outlined),
-    this.suffixIcon,
-    this.onChanged,
-    this.onSubmitted,
-    this.focusNode,
-    this.autofocus = false,
-  })  : keyboardType = TextInputType.phone,
-        textInputAction = TextInputAction.next,
-        obscureText = false,
-        readOnly = false,
-        maxLines = 1,
-        maxLength = 15,
-        prefixText = null,
-        suffixText = null,
-        contentPadding = const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        onTap = null,
-        inputFormatters = null,
-        showCounter = false,
-        textCapitalization = TextCapitalization.none,
-        initialValue = null,
-        super(key: key);
+    TextEditingController? controller,
+    String label = 'Nomor Telepon',
+    String hint = 'Masukkan nomor telepon',
+    String? Function(String?)? validator,
+    bool enabled = true,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    void Function(String)? onChanged,
+    void Function(String)? onSubmitted,
+    FocusNode? focusNode,
+    bool autofocus = false,
+  }) {
+    return CustomTextField(
+      key: key,
+      controller: controller,
+      label: label,
+      hint: hint,
+      validator: validator,
+      enabled: enabled,
+      prefixIcon: prefixIcon ??
+          PhosphorIcon(
+            PhosphorIconsRegular.phone,
+            size: 20,
+          ),
+      suffixIcon: suffixIcon,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      keyboardType: TextInputType.phone,
+      maxLength: 15,
+    );
+  }
 
-  const CustomTextField.name({
+  factory CustomTextField.name({
     Key? key,
-    this.controller,
-    this.label = 'Nama Lengkap',
-    this.hint = 'Masukkan nama lengkap',
-    this.validator,
-    this.enabled = true,
-    this.prefixIcon = const Icon(Icons.person_outline),
-    this.suffixIcon,
-    this.onChanged,
-    this.onSubmitted,
-    this.focusNode,
-    this.autofocus = false,
-  })  : keyboardType = TextInputType.name,
-        textInputAction = TextInputAction.next,
-        obscureText = false,
-        readOnly = false,
-        maxLines = 1,
-        maxLength = null,
-        prefixText = null,
-        suffixText = null,
-        contentPadding = const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        onTap = null,
-        inputFormatters = null,
-        showCounter = false,
-        textCapitalization = TextCapitalization.words,
-        initialValue = null,
-        super(key: key);
+    TextEditingController? controller,
+    String label = 'Nama Lengkap',
+    String hint = 'Masukkan nama lengkap',
+    String? Function(String?)? validator,
+    bool enabled = true,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    void Function(String)? onChanged,
+    void Function(String)? onSubmitted,
+    FocusNode? focusNode,
+    bool autofocus = false,
+  }) {
+    return CustomTextField(
+      key: key,
+      controller: controller,
+      label: label,
+      hint: hint,
+      validator: validator,
+      enabled: enabled,
+      prefixIcon: prefixIcon ??
+          PhosphorIcon(
+            PhosphorIconsRegular.user,
+            size: 20,
+          ),
+      suffixIcon: suffixIcon,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      keyboardType: TextInputType.name,
+      textCapitalization: TextCapitalization.words,
+    );
+  }
 
-  const CustomTextField.multiline({
+  factory CustomTextField.multiline({
     Key? key,
-    this.controller,
-    this.label,
-    this.hint,
-    this.validator,
-    this.enabled = true,
-    this.maxLines = 5,
-    this.maxLength,
-    this.onChanged,
-    this.focusNode,
-    this.autofocus = false,
-  })  : keyboardType = TextInputType.multiline,
-        textInputAction = TextInputAction.newline,
-        obscureText = false,
-        readOnly = false,
-        prefixIcon = null,
-        suffixIcon = null,
-        prefixText = null,
-        suffixText = null,
-        contentPadding = const EdgeInsets.all(16),
-        onSubmitted = null,
-        onTap = null,
-        inputFormatters = null,
-        showCounter = true,
-        textCapitalization = TextCapitalization.sentences,
-        initialValue = null,
-        super(key: key);
+    TextEditingController? controller,
+    String? label,
+    String? hint,
+    String? Function(String?)? validator,
+    bool enabled = true,
+    int maxLines = 5,
+    int? maxLength,
+    void Function(String)? onChanged,
+    FocusNode? focusNode,
+    bool autofocus = false,
+  }) {
+    return CustomTextField(
+      key: key,
+      controller: controller,
+      label: label,
+      hint: hint,
+      validator: validator,
+      enabled: enabled,
+      maxLines: maxLines,
+      maxLength: maxLength,
+      onChanged: onChanged,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      contentPadding: const EdgeInsets.all(16),
+      showCounter: true,
+      textCapitalization: TextCapitalization.sentences,
+    );
+  }
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -367,11 +391,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
     // If password field, show toggle visibility icon
     if (widget.obscureText) {
       return IconButton(
-        icon: Icon(
+        icon: PhosphorIcon(
           _obscureText
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+              ? PhosphorIconsRegular.eyeSlash
+              : PhosphorIconsRegular.eye,
           color: AppColors.textTertiary,
+          size: 20,
         ),
         onPressed: _toggleObscureText,
       );

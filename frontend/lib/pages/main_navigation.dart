@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'dashboard_page.dart';
 import 'scan_page.dart';
 import 'history.dart';
@@ -72,26 +73,28 @@ class _MainNavigationState extends State<MainNavigation> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
+                  icon: PhosphorIcons.house(PhosphorIconsStyle.regular),
+                  activeIcon: PhosphorIcons.house(PhosphorIconsStyle.fill),
                   label: 'Beranda',
                   index: 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.qr_code_scanner_outlined,
-                  activeIcon: Icons.qr_code_scanner,
+                  icon: PhosphorIcons.qrCode(PhosphorIconsStyle.regular),
+                  activeIcon: PhosphorIcons.qrCode(PhosphorIconsStyle.fill),
                   label: 'Pindai',
                   index: 1,
                 ),
                 _buildNavItem(
-                  icon: Icons.history_outlined,
-                  activeIcon: Icons.history,
+                  icon: PhosphorIcons.clockCounterClockwise(
+                      PhosphorIconsStyle.regular),
+                  activeIcon: PhosphorIcons.clockCounterClockwise(
+                      PhosphorIconsStyle.fill),
                   label: 'Riwayat',
                   index: 2,
                 ),
                 _buildNavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
+                  icon: PhosphorIcons.user(PhosphorIconsStyle.regular),
+                  activeIcon: PhosphorIcons.user(PhosphorIconsStyle.fill),
                   label: 'Profile',
                   index: 3,
                 ),
