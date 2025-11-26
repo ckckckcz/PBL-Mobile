@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 
-/// About App Page - Refactored with Clean Architecture
-/// Displays information about the application
 class AboutAppPage extends StatelessWidget {
   const AboutAppPage({Key? key}) : super(key: key);
 
@@ -28,19 +26,17 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build header with back button and title
   Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildBackButton(context),
         _buildHeaderTitle(),
-        const SizedBox(width: 40), // Placeholder for symmetry
+        const SizedBox(width: 40),
       ],
     );
   }
 
-  /// Build back button
   Widget _buildBackButton(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.pop(context),
@@ -68,7 +64,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build header title
   Widget _buildHeaderTitle() {
     return const Text(
       AppStrings.aboutApp,
@@ -80,7 +75,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build app information section
   Widget _buildAppInfo() {
     return Column(
       children: [
@@ -97,7 +91,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build app logo
   Widget _buildAppLogo() {
     return Container(
       width: 120,
@@ -128,7 +121,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build logo fallback when image fails to load
   Widget _buildLogoFallback() {
     return Container(
       decoration: BoxDecoration(
@@ -149,7 +141,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build app name
   Widget _buildAppName() {
     return const Text(
       AppStrings.appName,
@@ -161,7 +152,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build app version
   Widget _buildAppVersion() {
     return Text(
       AppStrings.appVersion,
@@ -172,7 +162,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build developer info
   Widget _buildDeveloperInfo() {
     return Text(
       AppStrings.developer,
@@ -183,7 +172,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build app description
   Widget _buildAppDescription() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -247,7 +235,6 @@ class AboutAppPage extends StatelessWidget {
     );
   }
 
-  /// Build features list
   Widget _buildFeaturesList() {
     final features = [
       '📸 Pemindaian sampah dengan kamera',

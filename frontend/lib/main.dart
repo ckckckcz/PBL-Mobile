@@ -6,11 +6,12 @@ import 'pages/auth/register.dart';
 import 'pages/main_navigation.dart';
 import 'pages/about_app.dart';
 import 'pages/scan_result.dart';
+import 'pages/scan_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-      SystemChrome.setSystemUIOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/home': (context) => const MainNavigation(initialIndex: 0),
-        '/scan': (context) => const MainNavigation(initialIndex: 1),
+        '/scan': (context) => const ScanPage(),
+        '/scan_with_nav': (context) => const MainNavigation(initialIndex: 1),
         '/history': (context) => const MainNavigation(initialIndex: 2),
         '/profile': (context) => const MainNavigation(initialIndex: 3),
         '/about_app': (context) => const AboutAppPage(),

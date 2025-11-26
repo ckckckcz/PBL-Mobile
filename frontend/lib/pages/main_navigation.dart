@@ -27,12 +27,21 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _pages = [
     const DashboardPage(),
-    const ScanPage(),
+    const ScanPage(), // This will not be used, scan opens fullscreen
     const HistoryPage(),
     const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
+    // If scan button is tapped, navigate to fullscreen scan page
+    if (index == 1) {
+      Navigator.pushNamed(context, '/scan').then((_) {
+        // After returning from scan page, keep current index unchanged
+        setState(() {});
+      });
+      return;
+    }
+
     setState(() {
       _currentIndex = index;
     });

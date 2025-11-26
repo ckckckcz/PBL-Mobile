@@ -6,8 +6,6 @@ import '../services/scan_history_service.dart';
 import '../widgets/history_widgets.dart';
 import 'scan_result.dart';
 
-/// Refactored History Page with Clean Architecture
-/// Uses extracted widgets for better code organization and maintainability
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
 
@@ -16,10 +14,7 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  // Services
   final ScanHistoryService _historyService = ScanHistoryService();
-
-  // State
   List<ScanHistory> _historyList = [];
   bool _isLoading = true;
 
@@ -29,7 +24,6 @@ class _HistoryPageState extends State<HistoryPage> {
     _loadHistory();
   }
 
-  /// Load history from service
   Future<void> _loadHistory() async {
     setState(() => _isLoading = true);
 
@@ -50,7 +44,6 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  /// Create dummy data for demonstration
   List<ScanHistory> _createDummyData() {
     final now = DateTime.now();
 
@@ -112,24 +105,6 @@ class _HistoryPageState extends State<HistoryPage> {
     ];
   }
 
-  /// Handle delete single scan
-  Future<void> _handleDeleteScan(String id) async {
-    final confirmed = await HistoryDialogs.showDeleteConfirmation(context);
-
-    if (confirmed == true) {
-      await _historyService.deleteScan(id);
-      await _loadHistory();
-
-      if (mounted) {
-        HistoryDialogs.showSuccessSnackBar(
-          context,
-          AppStrings.historyDeleted,
-        );
-      }
-    }
-  }
-
-  /// Handle clear all history
   Future<void> _handleClearAllHistory() async {
     final confirmed = await HistoryDialogs.showClearAllConfirmation(context);
 
@@ -146,7 +121,6 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  /// Navigate to scan result detail
   void _navigateToDetail(ScanHistory scan) {
     Navigator.push(
       context,
@@ -178,7 +152,6 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  /// Build header section
   Widget _buildHeader() {
     return HistoryHeader(
       hasHistory: _historyList.isNotEmpty,
@@ -186,7 +159,6 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  /// Build content section based on state
   Widget _buildContent() {
     if (_isLoading) {
       return _buildLoadingState();
@@ -199,7 +171,6 @@ class _HistoryPageState extends State<HistoryPage> {
     return _buildHistoryList();
   }
 
-  /// Build loading indicator
   Widget _buildLoadingState() {
     return const Center(
       child: CircularProgressIndicator(
@@ -208,13 +179,11 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  /// Build history list
   Widget _buildHistoryList() {
     return HistoryList(
       historyList: _historyList,
       onRefresh: _loadHistory,
       onItemTap: _navigateToDetail,
-      onDelete: _handleDeleteScan,
     );
   }
 }
