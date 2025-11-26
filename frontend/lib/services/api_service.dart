@@ -14,8 +14,8 @@ class ApiService {
   // - iOS Simulator: http://localhost:8000
   // - Physical Device: http://YOUR_COMPUTER_IP:8000
   static const String baseUrl =
-      'http://192.168.58.169:8000'; // Android Emulator
-  // static const String baseUrl = 'http://192.168.1.100:8000'; // Contoh Physical Device
+      'http://192.168.58.180:8000';
+  // static const String baseUrl = 'http://192.168.1.100:8000';
 
   // Endpoints
   static const String loginEndpoint = '/api/auth/login';
