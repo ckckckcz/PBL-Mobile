@@ -206,8 +206,12 @@ class _ScanPageState extends State<ScanPage> {
 
     // Specific waste types with their categories
     final wasteTypeMap = {
-      0: {'type': 'Botol Kaca', 'category': 'Anorganik'},
-      1: {'type': 'Daun Kering', 'category': 'Organik'},
+      0: {'type': 'Sisa Makanan', 'category': 'Organik'},
+      1: {'type': 'Sampah Kebun', 'category': 'Organik'},
+      2: {'type': 'Kertas', 'category': 'Organik'},
+      3: {'type': 'Kaca', 'category': 'Anorganik'},
+      4: {'type': 'Logam', 'category': 'Anorganik'},
+      5: {'type': 'Plastik', 'category': 'Anorganik'},
     };
     final random = DateTime.now().second % 2;
     final selectedWaste = wasteTypeMap[random]!;

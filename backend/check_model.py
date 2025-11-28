@@ -2,7 +2,7 @@ import joblib
 import numpy as np
 from PIL import Image
 
-model = joblib.load('model/model_sampah_hybrid_final_(2).pkl')
+model = joblib.load('model/model_v2.pkl')
 print('=== MODEL STRUCTURE ===')
 print('Model keys:', list(model.keys()))
 print('vocab_size:', model.get('vocab_size', 'N/A'))

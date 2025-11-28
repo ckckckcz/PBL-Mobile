@@ -2,7 +2,7 @@ import pickle
 import joblib
 from pathlib import Path
 
-model_path = Path("model/model_sampah_hybrid_final_(2).pkl")
+model_path = Path("model/model_v2.pkl")
 
 print("[CHECK] Validating model file...")
 print(f"[CHECK] Path: {model_path}")
