@@ -6,7 +6,8 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from PIL import Image
 import io
 import logging
-from ..models.schemas import PredictionResponse, ErrorResponse
+from typing import Dict, Any
+from .. models.schemas import PredictionResponse, ErrorResponse
 from ..services.model_service import get_model_service
 from ..services.prediction_service import get_prediction_service
 from ..services.image_service import get_image_preprocessor
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/api", tags=["Prediction"])
 
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict_waste(file: UploadFile = File(...)):
+async def predict_waste(file: UploadFile = File(... )):
     """
     Endpoint untuk prediksi jenis sampah dari gambar
 
@@ -52,9 +53,19 @@ async def predict_waste(file: UploadFile = File(...)):
             detail="Prediction service belum diinisialisasi"
         )
 
-    # Validate file type
-    if not file.content_type or not file.content_type.startswith("image/"):
-        logger.error(f"[PREDICT] ✗ Invalid content type: {file.content_type}")
+    # Validate file type - accept image/* dan application/octet-stream
+    if file.content_type:
+        is_image = file.content_type.startswith("image/")
+        is_octet_stream = file.content_type == "application/octet-stream"
+
+        if not (is_image or is_octet_stream):
+            logger.error(f"[PREDICT] ✗ Invalid content type: {file.content_type}")
+            raise HTTPException(
+                status_code=400,
+                detail="File harus berupa gambar"
+            )
+    else:
+        logger.error("[PREDICT] ✗ No content type provided")
         raise HTTPException(
             status_code=400,
             detail="File harus berupa gambar"
@@ -104,7 +115,7 @@ async def predict_waste(file: UploadFile = File(...)):
         raise
     except Exception as e:
         logger.error(f"[PREDICT] ===== PREDICTION FAILED =====")
-        logger.error(f"[PREDICT] Error: {str(e)}")
+        logger. error(f"[PREDICT] Error: {str(e)}")
         logger.exception(e)
         raise HTTPException(
             status_code=500,

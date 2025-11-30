@@ -96,8 +96,9 @@ class _LoginPageState extends State<LoginPage> {
   /// Handle login error
   void _handleLoginError(String error) {
     _showDialog(
-      title: 'Error',
-      message: AppStrings.errorNetwork,
+      title: 'Backend Belum Nyala',
+      message:
+          'Backendnya belum dinyalain, gausa login langsung pencet button atas kiri aja 👆',
     );
   }
 
@@ -178,7 +179,11 @@ class _LoginPageState extends State<LoginPage> {
   /// Build back button
   Widget _buildBackButton() {
     return InkWell(
-      onTap: () => Navigator.pop(context),
+      onTap: () => Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      ),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         width: 40,

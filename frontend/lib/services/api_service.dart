@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -13,8 +14,7 @@ class ApiService {
   // - Android Emulator: http://10.0.2.2:8000
   // - iOS Simulator: http://localhost:8000
   // - Physical Device: http://YOUR_COMPUTER_IP:8000
-  static const String baseUrl =
-      'http://192.168.58.180:8000';
+  static const String baseUrl = 'http://192.168.71.148:8000';
   // static const String baseUrl = 'http://192.168.1.100:8000';
 
   // Endpoints
@@ -47,7 +47,7 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(tokenKey);
     await prefs.remove(userIdKey);
-    await prefs.remove(userEmailKey);
+    await prefs. remove(userEmailKey);
     await prefs.remove(userNameKey);
   }
 
@@ -60,10 +60,10 @@ class ApiService {
   }
 
   // Get user data
-  Future<Map<String, String?>> getUserData() async {
+  Future<Map<String, String? >> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     return {
-      'id': prefs.getString(userIdKey),
+      'id': prefs. getString(userIdKey),
       'email': prefs.getString(userEmailKey),
       'name': prefs.getString(userNameKey),
     };
@@ -121,7 +121,7 @@ class ApiService {
       print('[API] Response status: ${response.statusCode}');
       print('[API] Response body: ${response.body}');
 
-      final data = json.decode(response.body);
+      final data = json.decode(response. body);
 
       if (response.statusCode == 200) {
         // Save token and user data
@@ -312,8 +312,31 @@ class ApiService {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
-      // Add image file
-      request.files.add(await http.MultipartFile.fromPath('file', imagePath));
+      // Add image file dengan Content-Type yang tepat
+      final file = await http.MultipartFile.fromPath('file', imagePath);
+
+      // Tentukan content-type berdasarkan file extension
+      final extension = imagePath.toLowerCase().split('.').last;
+      String contentType = 'image/jpeg'; // default
+
+      if (extension == 'png') {
+        contentType = 'image/png';
+      } else if (extension == 'gif') {
+        contentType = 'image/gif';
+      } else if (extension == 'webp') {
+        contentType = 'image/webp';
+      }
+
+      // Buat MultipartFile dengan content-type yang benar
+      final imageFile = http.MultipartFile(
+        'file',
+        file.finalize(),
+        file.length,
+        filename: file.filename,
+        contentType: MediaType('image', extension),
+      );
+
+      request.files.add(imageFile);
 
       // Send request
       final streamedResponse = await request.send();
@@ -322,20 +345,25 @@ class ApiService {
       print('[API] Response status: ${response.statusCode}');
       print('[API] Response body: ${response.body}');
 
-      final data = json.decode(response.body);
+      final responseData = json.decode(response. body);
 
-      if (response.statusCode == 200) {
+      if (response. statusCode == 200) {
+        // Backend returns {success: true, data: {wasteType, category, confidence, tips, description, modelInfo}}
+        final data = responseData['data'];
         return {
           'success': true,
-          'prediction': data['prediction'],
-          'confidence': data['confidence'],
-          'category': data['category'],
-          'tips': data['tips'],
+          'data': {
+            'wasteType': data['wasteType'],
+            'category': data['category'],
+            'confidence': data['confidence'],
+            'tips': data['tips'],
+            'description': data['description'],
+          },
         };
       } else {
         return {
           'success': false,
-          'message': data['detail'] ?? 'Prediksi gagal',
+          'message': responseData['detail'] ?? 'Prediksi gagal',
         };
       }
     } catch (e) {
@@ -357,7 +385,7 @@ class ApiService {
       final url = Uri.parse('$baseUrl/health');
       print('[API] GET $url');
 
-      final response = await http.get(url).timeout(
+      final response = await http.get(url). timeout(
         const Duration(seconds: 5),
         onTimeout: () {
           throw Exception('Connection timeout');

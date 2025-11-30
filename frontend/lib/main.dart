@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       title: 'Eco Waste Detector',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/home',
+      initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),

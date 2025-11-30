@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/scan_history_model.dart';
 import '../services/scan_history_service.dart';
+import '../services/api_service.dart';
 import 'scan_result.dart';
 
 class ScanPage extends StatefulWidget {
@@ -131,27 +132,11 @@ class _ScanPageState extends State<ScanPage> {
     try {
       // Skip permission check on web platform
       if (!kIsWeb) {
-        // Request storage permission for Android 12 and below
-        if (await Permission.storage.isDenied) {
-          final status = await Permission.storage.request();
-          if (!status.isGranted) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Izin storage diperlukan untuk mengakses galeri'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            return;
-          }
-        }
-
-        // Request photos permission for Android 13+
-        if (await Permission.photos.isDenied) {
-          final status = await Permission.photos.request();
-          if (!status.isGranted) {
+        // Request photos permission for Android 13+ first
+        final photosStatus = await Permission.photos.status;
+        if (photosStatus.isDenied) {
+          final requestResult = await Permission.photos.request();
+          if (requestResult.isDenied) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -163,6 +148,46 @@ class _ScanPageState extends State<ScanPage> {
             }
             return;
           }
+        } else if (photosStatus.isPermanentlyDenied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Izin foto ditolak permanen.  Buka Settings untuk mengubah. '),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        // Request storage permission for Android 12 and below
+        final storageStatus = await Permission.storage.status;
+        if (storageStatus.isDenied) {
+          final requestResult = await Permission.storage.request();
+          if (requestResult.isDenied) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content:
+                      Text('Izin storage diperlukan untuk mengakses galeri'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+            return;
+          }
+        } else if (storageStatus.isPermanentlyDenied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Izin storage ditolak permanen. Buka Settings untuk mengubah.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
         }
       }
 
@@ -201,66 +226,115 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   Future<void> _navigateToResult(String imagePath) async {
-    // Generate dummy scan result data
-    final scanId = DateTime.now().millisecondsSinceEpoch.toString();
+    try {
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            );
+          },
+        );
+      }
 
-    // Specific waste types with their categories
-    final wasteTypeMap = {
-      0: {'type': 'Sisa Makanan', 'category': 'Organik'},
-      1: {'type': 'Sampah Kebun', 'category': 'Organik'},
-      2: {'type': 'Kertas', 'category': 'Organik'},
-      3: {'type': 'Kaca', 'category': 'Anorganik'},
-      4: {'type': 'Logam', 'category': 'Anorganik'},
-      5: {'type': 'Plastik', 'category': 'Anorganik'},
-    };
-    final random = DateTime.now().second % 2;
-    final selectedWaste = wasteTypeMap[random]!;
-    final wasteType = selectedWaste['type']!;
-    final category = selectedWaste['category']!;
+      // Call the actual prediction API
+      final apiService = ApiService();
+      final result = await apiService.predictWaste(imagePath);
 
-    final tips = [
-      {
-        'title': 'Bersihkan sampah anorganik sebelum dibuang',
-        'color': '#4CAF50'
-      },
-      {'title': 'Pisahkan plastik, kaca, dan logam', 'color': '#66BB6A'},
-      {'title': 'Gunakan ulang wadah yang masih layak', 'color': '#81C784'},
-      {'title': 'Tekan plastik/kardus agar hemat ruang', 'color': '#81C784'},
-      {'title': 'Setorkan ke bank sampah terdekat', 'color': '#81C784'},
-    ];
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
 
-    final now = DateTime.now();
-    final dateFormatter = '${now.day} ${_getMonthName(now.month)} ${now.year}';
+      // Check if prediction was successful
+      if (!result['success']) {
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Gagal menganalisis gambar'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
 
-    final scanHistory = ScanHistory(
-      id: scanId,
-      imageUri: imagePath,
-      wasteType: wasteType,
-      category: category,
-      confidence: 85.0 + (DateTime.now().millisecond % 15),
-      description: 'Dipindai: $dateFormatter',
-      tips: tips.map((e) => Map<String, String>.from(e)).toList(),
-      scanDate: DateTime.now(),
-    );
+      // Extract data from API response
+      final data = result['data'];
+      final wasteType = data['wasteType'] as String;
+      final category = data['category'] as String;
+      final confidence = (data['confidence'] as num).toDouble();
+      final description = data['description'] as String;
 
-    // Save to history
-    await _historyService.saveScan(scanHistory);
+      // Convert tips from API format to local format
+      final apiTips = data['tips'] as List<dynamic>;
+      final tips = apiTips.map((tip) {
+        return {
+          'title': tip['title'] as String,
+          'color': tip['color'] as String,
+        };
+      }).toList();
 
-    // Navigate to result page
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ScanResultPage(
-            imageUri: imagePath,
-            wasteType: scanHistory.wasteType,
-            category: scanHistory.category,
-            confidence: scanHistory.confidence,
-            description: scanHistory.description,
-            tips: scanHistory.tips,
-          ),
-        ),
+      // Generate scan ID and date
+      final scanId = DateTime.now().millisecondsSinceEpoch.toString();
+      final now = DateTime.now();
+      final dateFormatter =
+          '${now.day} ${_getMonthName(now.month)} ${now.year}';
+
+      // Create scan history object
+      final scanHistory = ScanHistory(
+        id: scanId,
+        imageUri: imagePath,
+        wasteType: wasteType,
+        category: category,
+        confidence: confidence,
+        description: '$description\nDipindai: $dateFormatter',
+        tips: tips.map((e) => Map<String, String>.from(e)).toList(),
+        scanDate: now,
       );
+
+      // Save to history
+      await _historyService.saveScan(scanHistory);
+
+      // Navigate to result page
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScanResultPage(
+              imageUri: imagePath,
+              wasteType: scanHistory.wasteType,
+              category: scanHistory.category,
+              confidence: scanHistory.confidence,
+              description: scanHistory.description,
+              tips: scanHistory.tips,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backendnya belum dinyalain coy'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      print('[SCAN] Error in _navigateToResult: $e');
     }
   }
 

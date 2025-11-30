@@ -26,33 +26,42 @@ class ModelPipelineInfo(BaseModel):
 
 class ModelComponents(BaseModel):
     """Schema for model components information"""
-    orb_n_features: Any
-    vocab_size: Any
-    kmeans_n_clusters: int
-    kmeans_input_features: int
-    kmeans_output_features: int
-    scaler_input_features: int
     xgb_model_type: str
-    xgb_n_classes: Any
+    scaler_type: str
+    label_encoder_type: str
+    n_classes: int
+    classes: List[str]
+    waste_map: Dict[str, str]
+    threshold: float
+    # Make these optional since they may not be used in this model
+    orb_n_features: Optional[Any] = None
+    vocab_size: Optional[Any] = None
+    kmeans_n_clusters: Optional[int] = None
+    kmeans_input_features: Optional[int] = None
+    kmeans_output_features: Optional[int] = None
+    scaler_input_features: Optional[int] = None
+    xgb_n_classes: Optional[Any] = None
+
+    class Config:
+        extra = "allow"  # Allow extra fields not defined in schema
 
 
 class ProbabilitiesPerClass(BaseModel):
     """Schema for prediction probabilities per class"""
-    Sampah_Organik: Optional[float] = Field(None, alias="Sampah Organik")
-    Sampah_Anorganik: Optional[float] = Field(None, alias="Sampah Anorganik")
-    Sampah_B3: Any = Field(None, alias="Sampah B3")
 
     class Config:
-        populate_by_name = True
+        extra = "allow"  # Allow any class name as key
 
 
 class ModelInfo(BaseModel):
     """Schema for detailed model information"""
     confidenceSource: str
-    pipeline: ModelPipelineInfo
+    pipeline: Dict[str, str]  # Changed from ModelPipelineInfo to Dict for flexibility
     modelComponents: ModelComponents
-    probabilitiesPerClass: ProbabilitiesPerClass
-    _note: str
+    probabilitiesPerClass: Optional[Dict[str, Any]] = None
+
+    class Config:
+        extra = "allow"  # Allow extra fields
 
 
 class PredictionData(BaseModel):

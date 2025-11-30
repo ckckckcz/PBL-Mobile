@@ -1,4 +1,4 @@
-package com.example.pbl_mobile
+package com.example.pilar
 
 import io.flutter.embedding.android.FlutterActivity
 
