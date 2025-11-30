@@ -132,6 +132,18 @@ class ProfilePage extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
+                // Change Password Button
+                _buildMenuItem(
+                  context,
+                  icon: PhosphorIcons.lock(PhosphorIconsStyle.regular),
+                  title: 'Ubah Kata Sandi',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/change-password');
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
                 // Settings Button
                 _buildMenuItem(
                   context,
