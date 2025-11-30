@@ -8,17 +8,16 @@ import '../../utils/validators.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class ForgotPasswordPage extends StatefulWidget {
+  const ForgotPasswordPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   // Controllers
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   // Services
@@ -30,12 +29,11 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  /// Handle login action
-  Future<void> _handleLogin() async {
+  /// Handle forgot password action
+  Future<void> _handleResetPassword() async {
     // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
@@ -47,21 +45,20 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await _apiService.login(
+      final result = await _apiService.forgotPassword(
         email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
       );
 
       if (!mounted) return;
 
       if (result['success'] == true) {
-        _handleLoginSuccess(result['message']);
+        _handleResetSuccess(result['message']);
       } else {
-        _handleLoginFailure(result['message']);
+        _handleResetFailure(result['message']);
       }
     } catch (error) {
       if (mounted) {
-        _handleLoginError(error.toString());
+        _handleResetError(error.toString());
       }
     } finally {
       if (mounted) {
@@ -70,52 +67,39 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// Handle successful login
-  void _handleLoginSuccess(String? message) {
-    _showSnackBar(
-      message ?? AppStrings.loginSuccess,
-      isError: false,
-    );
-
-    // Navigate to home
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/home',
-      (route) => false,
-    );
-  }
-
-  /// Handle login failure
-  void _handleLoginFailure(String? message) {
+  /// Handle successful password reset
+  void _handleResetSuccess(String? message) {
     _showDialog(
-      title: 'Login Gagal',
-      message: message ?? AppStrings.errorLogin,
+      title: 'Email Terkirim',
+      message: message ?? 'Instruksi reset password telah dikirim ke email Anda.',
+      onConfirm: () {
+        Navigator.pop(context);
+      },
     );
   }
 
-  /// Handle login error
-  void _handleLoginError(String error) {
+  /// Handle password reset failure
+  void _handleResetFailure(String? message) {
     _showDialog(
-      title: 'Backend Belum Nyala',
-      message:
-          'Backendnya belum dinyalain, gausa login langsung pencet button atas kiri aja 👆',
+      title: 'Gagal',
+      message: message ?? 'Gagal mengirim email reset password. Silakan coba lagi.',
     );
   }
 
-  /// Show snackbar message
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.error : AppColors.success,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
+  /// Handle password reset error
+  void _handleResetError(String error) {
+    _showDialog(
+      title: 'Error',
+      message: AppStrings.errorNetwork,
     );
   }
 
   /// Show alert dialog
-  void _showDialog({required String title, required String message}) {
+  void _showDialog({
+    required String title,
+    required String message,
+    VoidCallback? onConfirm,
+  }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -123,25 +107,15 @@ class _LoginPageState extends State<LoginPage> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: onConfirm ?? () => Navigator.pop(context),
             child: Text(
-              AppStrings.ok,
+              'OK',
               style: const TextStyle(color: AppColors.primary),
             ),
           ),
         ],
       ),
     );
-  }
-
-  /// Navigate to register page
-  void _navigateToRegister() {
-    Navigator.pushNamed(context, '/register');
-  }
-
-  /// Navigate to forgot password page
-  void _navigateToForgotPassword() {
-    Navigator.pushNamed(context, '/forgot-password');
   }
 
   @override
@@ -184,11 +158,7 @@ class _LoginPageState extends State<LoginPage> {
   /// Build back button
   Widget _buildBackButton() {
     return InkWell(
-      onTap: () => Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/home',
-        (route) => false,
-      ),
+      onTap: () => Navigator.pop(context),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         width: 40,
@@ -212,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
   /// Build title
   Widget _buildTitle() {
     return const Text(
-      'Masuk untuk melanjutkan aktivitasmu',
+      'Lupa kata sandi?',
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
@@ -224,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
   /// Build subtitle
   Widget _buildSubtitle() {
     return Text(
-      'Akses akunmu dan mulai gunakan fitur PILAR dengan mudah.',
+      'Masukkan email Anda untuk menerima instruksi reset kata sandi.',
       style: TextStyle(
         fontSize: 14,
         color: Colors.white.withOpacity(0.9),
@@ -250,16 +220,12 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: 32),
               _buildEmailField(),
-              const SizedBox(height: 20),
-              _buildPasswordField(),
-              const SizedBox(height: 8),
-              _buildForgotPasswordLink(),
+              const SizedBox(height: 32),
+              _buildResetButton(),
               const SizedBox(height: 24),
-              _buildLoginButton(),
-              const SizedBox(height: 24),
-              _buildRegisterLink(),
+              _buildBackToLoginLink(),
             ],
           ),
         ),
@@ -271,65 +237,30 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildEmailField() {
     return CustomTextField.email(
       controller: _emailController,
-      label: AppStrings.email,
+      label: 'Email',
       hint: 'contoh@email.com',
       validator: Validators.email,
       enabled: !_isLoading,
     );
   }
 
-  /// Build password field
-  Widget _buildPasswordField() {
-    return CustomTextField.password(
-      controller: _passwordController,
-      label: AppStrings.password,
-      hint: 'Masukkan password',
-      validator: Validators.password,
-      enabled: !_isLoading,
-      onSubmitted: (_) => _handleLogin(),
-    );
-  }
-
-  /// Build forgot password link
-  Widget _buildForgotPasswordLink() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: _isLoading ? null : _navigateToForgotPassword,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: const Text(
-          'Lupa kata sandi?',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.primary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Build login button
-  Widget _buildLoginButton() {
+  /// Build reset button
+  Widget _buildResetButton() {
     return CustomButton.primary(
-      text: AppStrings.login,
-      onPressed: _isLoading ? null : _handleLogin,
+      text: 'Kirim',
+      onPressed: _isLoading ? null : _handleResetPassword,
       isLoading: _isLoading,
       height: 56,
     );
   }
 
-  /// Build register link
-  Widget _buildRegisterLink() {
+  /// Build back to login link
+  Widget _buildBackToLoginLink() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          AppStrings.dontHaveAccount,
+          'Ingat kata sandi?',
           style: const TextStyle(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -337,14 +268,14 @@ class _LoginPageState extends State<LoginPage> {
         ),
         const SizedBox(width: 4),
         TextButton(
-          onPressed: _isLoading ? null : _navigateToRegister,
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: const Text(
-            'Daftar di sini',
+            'Masuk',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,

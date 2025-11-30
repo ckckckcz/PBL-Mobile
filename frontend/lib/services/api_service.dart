@@ -20,6 +20,8 @@ class ApiService {
   // Endpoints
   static const String loginEndpoint = '/api/auth/login';
   static const String registerEndpoint = '/api/auth/register';
+  static const String forgotPasswordEndpoint = '/api/auth/forgot-password';
+  static const String changePasswordEndpoint = '/api/auth/change-password';
   static const String meEndpoint = '/api/auth/me';
   static const String logoutEndpoint = '/api/auth/logout';
   static const String predictEndpoint = '/api/predict';
@@ -207,6 +209,98 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during registration: $e');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  /// Forgot password
+  /// Returns: {success, message}
+  Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl$forgotPasswordEndpoint');
+      final body = json.encode({
+        'email': email,
+      });
+
+      print('[API] POST $url');
+      print('[API] Body: $body');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(),
+        body: body,
+      );
+
+      print('[API] Response status: ${response.statusCode}');
+      print('[API] Response body: ${response.body}');
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Email reset password telah dikirim',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['detail'] ?? 'Gagal mengirim email reset password',
+        };
+      }
+    } catch (e) {
+      print('[API] Error during forgot password: $e');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  /// Change password
+  /// Returns: {success, message}
+  Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl$changePasswordEndpoint');
+      final body = json.encode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      });
+
+      print('[API] POST $url');
+      print('[API] Body: ${body.replaceAll('"current_password": "${currentPassword}"', '"current_password": "***"')}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(includeAuth: true),
+        body: body,
+      );
+
+      print('[API] Response status: ${response.statusCode}');
+      print('[API] Response body: ${response.body}');
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Kata sandi berhasil diubah',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['detail'] ?? 'Gagal mengubah kata sandi',
+        };
+      }
+    } catch (e) {
+      print('[API] Error during change password: $e');
       return {
         'success': false,
         'message': 'Terjadi kesalahan: $e',
