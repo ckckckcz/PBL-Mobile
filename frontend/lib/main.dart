@@ -4,11 +4,12 @@ import 'theme/app_theme.dart';
 import 'pages/auth/login.dart';
 import 'pages/auth/register.dart';
 import 'pages/auth/forgot_password.dart';
-import 'pages/auth/change_password.dart';
+import 'pages/auth/change_password_step1.dart';
+import 'pages/auth/change_password_step2.dart';
 import 'pages/main_navigation.dart';
-import 'pages/about_app.dart';
-import 'pages/scan_result.dart';
 import 'pages/scan_page.dart';
+import 'pages/scan_result.dart';
+import 'pages/about_app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +40,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
-        '/change-password': (context) => const ChangePasswordPage(),
+        '/change-password-step1': (context) => const ChangePasswordStep1Page(),
+        '/change-password-step2': (context) => const ChangePasswordStep2Page(),
         '/home': (context) => const MainNavigation(initialIndex: 0),
         '/scan': (context) => const ScanPage(),
         '/scan_with_nav': (context) => const MainNavigation(initialIndex: 1),

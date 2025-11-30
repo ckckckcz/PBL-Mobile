@@ -1,56 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../constants/app_colors.dart';
-import '../../constants/app_strings.dart';
 import '../../services/api_service.dart';
-import '../../utils/validators.dart';
 
-class ChangePasswordPage extends StatefulWidget {
-  const ChangePasswordPage({super.key});
+class ChangePasswordStep2Page extends StatefulWidget {
+  const ChangePasswordStep2Page({super.key});
 
   @override
-  State<ChangePasswordPage> createState() => _ChangePasswordPageState();
+  State<ChangePasswordStep2Page> createState() => _ChangePasswordStep2PageState();
 }
 
-class _ChangePasswordPageState extends State<ChangePasswordPage> {
-  // Controllers
-  final _currentPasswordController = TextEditingController();
+class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
-  // Services
   final _apiService = ApiService();
 
-  // State
-  bool _isLoading = false;
-  bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+  String _currentPassword = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get current password from arguments
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args != null) {
+      _currentPassword = args as String;
+    }
+  }
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  /// Handle change password action
+  void _toggleNewPasswordVisibility() {
+    setState(() {
+      _obscureNewPassword = !_obscureNewPassword;
+    });
+  }
+
+  void _toggleConfirmPasswordVisibility() {
+    setState(() {
+      _obscureConfirmPassword = !_obscureConfirmPassword;
+    });
+  }
+
   Future<void> _handleChangePassword() async {
-    // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Hide keyboard
     FocusScope.of(context).unfocus();
-
     setState(() => _isLoading = true);
 
     try {
       final result = await _apiService.changePassword(
-        currentPassword: _currentPasswordController.text.trim(),
+        currentPassword: _currentPassword,
         newPassword: _newPasswordController.text.trim(),
       );
 
@@ -72,18 +81,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     }
   }
 
-  /// Handle successful password change
   void _handleChangeSuccess(String? message) {
     _showDialog(
       title: 'Berhasil',
       message: message ?? 'Kata sandi berhasil diubah.',
       onConfirm: () {
-        Navigator.pop(context);
+        Navigator.popUntil(context, (route) => route.isFirst);
       },
     );
   }
 
-  /// Handle password change failure
   void _handleChangeFailure(String? message) {
     _showDialog(
       title: 'Gagal',
@@ -91,15 +98,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     );
   }
 
-  /// Handle password change error
   void _handleChangeError(String error) {
     _showDialog(
       title: 'Error',
-      message: AppStrings.errorNetwork,
+      message: 'Terjadi kesalahan. Silakan coba lagi nanti.',
     );
   }
 
-  /// Show alert dialog
   void _showDialog({
     required String title,
     required String message,
@@ -113,33 +118,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         actions: [
           TextButton(
             onPressed: onConfirm ?? () => Navigator.pop(context),
-            child: Text(
+            child: const Text(
               'OK',
-              style: const TextStyle(color: AppColors.primary),
+              style: TextStyle(color: Color(0xFF4CAF50)),
             ),
           ),
         ],
       ),
     );
-  }
-
-  /// Toggle password visibility
-  void _toggleCurrentPasswordVisibility() {
-    setState(() {
-      _obscureCurrentPassword = !_obscureCurrentPassword;
-    });
-  }
-
-  void _toggleNewPasswordVisibility() {
-    setState(() {
-      _obscureNewPassword = !_obscureNewPassword;
-    });
-  }
-
-  void _toggleConfirmPasswordVisibility() {
-    setState(() {
-      _obscureConfirmPassword = !_obscureConfirmPassword;
-    });
   }
 
   @override
@@ -162,10 +148,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   const SizedBox(height: 12),
                   _buildDescription(),
                   const SizedBox(height: 40),
-                  _buildCurrentPasswordField(),
-                  const SizedBox(height: 20),
                   _buildNewPasswordField(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   _buildConfirmPasswordField(),
                   const SizedBox(height: 32),
                   _buildChangeButton(),
@@ -185,10 +169,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       children: [
         // Outer light circle
         Container(
-          width: 90, // Slightly larger than the inner circle
+          width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: const Color(0xFFEFFBF7), // A lighter shade of green
+            color: const Color(0xFFEFFBF7),
             shape: BoxShape.circle,
           ),
         ),
@@ -236,68 +220,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     );
   }
 
-  /// Build current password field
-  Widget _buildCurrentPasswordField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Kata Sandi Saat Ini',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextFormField(
-            controller: _currentPasswordController,
-            obscureText: _obscureCurrentPassword,
-            decoration: InputDecoration(
-              hintText: 'Masukkan kata sandi',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9E9E9E),
-              ),
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-              suffixIcon: IconButton(
-                onPressed: _toggleCurrentPasswordVisibility,
-                icon: Icon(
-                  _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
-                  color: const Color(0xFF757575),
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
-            validator: Validators.password,
-            enabled: !_isLoading,
-          ),
-        ),
-      ],
-    );
-  }
-
   /// Build new password field
   Widget _buildNewPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Kata Sandi Baru',
+          'Buat Kata Sandi Baru',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -335,10 +264,18 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
-            validator: (value) => Validators.password(value, minLength: 8),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Kata sandi harus diisi';
+              }
+              if (value.length < 6) {
+                return 'Kata sandi minimal 6 karakter';
+              }
+              return null;
+            },
             enabled: !_isLoading,
           ),
         ),
@@ -352,7 +289,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Konfirmasi Kata Sandi Baru',
+          'Konfirmasi Kata Sandi',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -390,13 +327,18 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
-            validator: (value) => Validators.confirmPassword(
-              value,
-              _newPasswordController.text,
-            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Konfirmasi kata sandi harus diisi';
+              }
+              if (value != _newPasswordController.text) {
+                return 'Kata sandi tidak cocok';
+              }
+              return null;
+            },
             enabled: !_isLoading,
           ),
         ),
@@ -408,7 +350,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget _buildChangeButton() {
     return Container(
       width: double.infinity,
-      height: 50,
+      height: 56,
       decoration: BoxDecoration(
         color: const Color(0xFF4CAF50),
         borderRadius: BorderRadius.circular(8),

@@ -1,117 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../constants/app_colors.dart';
-import '../../constants/app_strings.dart';
-import '../../services/api_service.dart';
-import '../../utils/validators.dart';
 
-class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+class ChangePasswordStep1Page extends StatefulWidget {
+  const ChangePasswordStep1Page({super.key});
 
   @override
-  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+  State<ChangePasswordStep1Page> createState() => _ChangePasswordStep1PageState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  // Controllers
-  final _emailController = TextEditingController();
+class _ChangePasswordStep1PageState extends State<ChangePasswordStep1Page> {
+  final _currentPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
-  // Services
-  final _apiService = ApiService();
-
-  // State
+  bool _obscureCurrentPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _currentPasswordController.dispose();
     super.dispose();
   }
 
-  /// Handle forgot password action
-  Future<void> _handleResetPassword() async {
-    // Validate form
+  void _toggleCurrentPasswordVisibility() {
+    setState(() {
+      _obscureCurrentPassword = !_obscureCurrentPassword;
+    });
+  }
+
+  void _handleContinue() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Hide keyboard
-    FocusScope.of(context).unfocus();
-
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await _apiService.forgotPassword(
-        email: _emailController.text.trim(),
-      );
-
-      if (!mounted) return;
-
-      if (result['success'] == true) {
-        _handleResetSuccess(result['message']);
-      } else {
-        _handleResetFailure(result['message']);
-      }
-    } catch (error) {
-      if (mounted) {
-        _handleResetError(error.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  /// Handle successful password reset
-  void _handleResetSuccess(String? message) {
-    _showDialog(
-      title: 'Email Terkirim',
-      message: message ?? 'Instruksi reset password telah dikirim ke email Anda.',
-      onConfirm: () {
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  /// Handle password reset failure
-  void _handleResetFailure(String? message) {
-    _showDialog(
-      title: 'Gagal',
-      message: message ?? 'Gagal mengirim email reset password. Silakan coba lagi.',
-    );
-  }
-
-  /// Handle password reset error
-  void _handleResetError(String error) {
-    _showDialog(
-      title: 'Error',
-      message: AppStrings.errorNetwork,
-    );
-  }
-
-  /// Show alert dialog
-  void _showDialog({
-    required String title,
-    required String message,
-    VoidCallback? onConfirm,
-  }) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: onConfirm ?? () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: const TextStyle(color: AppColors.primary),
-            ),
-          ),
-        ],
-      ),
+    // Navigate to step 2 with current password
+    Navigator.pushNamed(
+      context,
+      '/change-password-step2',
+      arguments: _currentPasswordController.text,
     );
   }
 
@@ -119,31 +43,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Lupa Kata Sandi',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.dark,
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -155,9 +59,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   const SizedBox(height: 12),
                   _buildDescription(),
                   const SizedBox(height: 40),
-                  _buildEmailField(),
+                  _buildCurrentPasswordField(),
                   const SizedBox(height: 32),
-                  _buildResetButton(),
+                  _buildContinueButton(),
                 ],
               ),
             ),
@@ -174,10 +78,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       children: [
         // Outer light circle
         Container(
-          width: 90, // Slightly larger than the inner circle
+          width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: const Color(0xFFEFFBF7), // A lighter shade of green
+            color: const Color(0xFFEFFBF7),
             shape: BoxShape.circle,
           ),
         ),
@@ -202,7 +106,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   /// Build title
   Widget _buildTitle() {
     return const Text(
-      'Lupa Kata Sandi?',
+      'Ubah Kata Sandi',
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 24,
@@ -215,7 +119,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   /// Build description
   Widget _buildDescription() {
     return const Text(
-      'Tenang saja! Masukkan email akunmu dan kami akan mengirimkan langkah pemulihan.',
+      'Perbarui kata sandi Anda untuk menjaga keamanan akun.',
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 14,
@@ -225,13 +129,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  /// Build email field
-  Widget _buildEmailField() {
+  /// Build current password field
+  Widget _buildCurrentPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Email',
+          'Kata Sandi Saat Ini',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -245,26 +149,42 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: TextFormField(
-            controller: _emailController,
-            decoration: const InputDecoration(
-              hintText: 'Masukkan email',
-              hintStyle: TextStyle(
+            controller: _currentPasswordController,
+            obscureText: _obscureCurrentPassword,
+            decoration: InputDecoration(
+              hintText: 'Masukkan kata sandi',
+              hintStyle: const TextStyle(
                 color: Color(0xFF9E9E9E),
               ),
-              border: OutlineInputBorder(
+              border: const OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
-              focusedBorder: OutlineInputBorder(
+              focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
-              contentPadding: EdgeInsets.symmetric(
+              suffixIcon: IconButton(
+                onPressed: _toggleCurrentPasswordVisibility,
+                icon: Icon(
+                  _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFF757575),
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
-            validator: Validators.email,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Kata sandi harus diisi';
+              }
+              if (value.length < 6) {
+                return 'Kata sandi minimal 6 karakter';
+              }
+              return null;
+            },
             enabled: !_isLoading,
           ),
         ),
@@ -272,11 +192,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  /// Build reset button
-  Widget _buildResetButton() {
+  /// Build continue button
+  Widget _buildContinueButton() {
     return Container(
       width: double.infinity,
-      height: 50,
+      height: 56,
       decoration: BoxDecoration(
         color: const Color(0xFF4CAF50),
         borderRadius: BorderRadius.circular(8),
@@ -284,7 +204,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _isLoading ? null : _handleResetPassword,
+          onTap: _isLoading ? null : _handleContinue,
           borderRadius: BorderRadius.circular(8),
           child: Center(
             child: _isLoading
@@ -297,7 +217,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                   )
                 : const Text(
-                    'Kirim',
+                    'Lanjutkan',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
