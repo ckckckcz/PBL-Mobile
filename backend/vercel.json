@@ -1,15 +1,15 @@
 {
   "version": 2,
   "functions": {
-    "app/main.py": {
-      "runtime": "@vercel/python@3.10",
+    "backend/app/main.py": {
+      "runtime": "python3.10",
       "maxDuration": 60
     }
   },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app/main.py"
+      "dest": "backend/app/main.py"
     }
   ],
   "env": {
