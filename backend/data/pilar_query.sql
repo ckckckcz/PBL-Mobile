@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS public.scan_history CASCADE;
 -- ================================================================================
 -- Menyimpan data user untuk authentication dan profile
 CREATE TABLE public.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
@@ -37,8 +37,8 @@ CREATE TABLE public.users (
 -- ================================================================================
 -- Menyimpan riwayat scan sampah oleh user
 CREATE TABLE public.scan_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,
     waste_category VARCHAR(50) NOT NULL, -- Sampah Organik, Sampah Anorganik, Sampah B3
     confidence DECIMAL(5,2) NOT NULL, -- 0.00 - 100.00
@@ -88,6 +88,10 @@ CREATE POLICY "Users can view own data" ON public.users
     FOR SELECT
     USING (true); -- Sementara allow all untuk development
 
+CREATE POLICY "Users can insert during registration" ON public.users
+    FOR INSERT
+    WITH CHECK (true); -- Allow registration untuk user baru
+
 CREATE POLICY "Users can update own data" ON public.users
     FOR UPDATE
     USING (true);
@@ -108,15 +112,15 @@ CREATE POLICY "Users can insert own scan history" ON public.scan_history
 -- Hash menggunakan bcrypt dengan cost=12
 -- Hash: $2b$12$lCu2ZtRKleZ9HQw0LErqYObr1aiigqDjOYTgNnTJnDNjYOCCSqsta
 
--- Sample User 1
+-- Sample User 1 (ID akan otomatis = 1)
 INSERT INTO public.users (email, password_hash, full_name, phone) VALUES
 ('admin@pilar.com', '$2b$12$lCu2ZtRKleZ9HQw0LErqYObr1aiigqDjOYTgNnTJnDNjYOCCSqsta', 'Admin PILAR', '+6281234567890');
 
--- Sample User 2
+-- Sample User 2 (ID akan otomatis = 2)
 INSERT INTO public.users (email, password_hash, full_name, phone) VALUES
 ('user@pilar.com', '$2b$12$lCu2ZtRKleZ9HQw0LErqYObr1aiigqDjOYTgNnTJnDNjYOCCSqsta', 'User Testing', '+6281234567891');
 
--- Sample User 3
+-- Sample User 3 (ID akan otomatis = 3)
 INSERT INTO public.users (email, password_hash, full_name) VALUES
 ('test@pilar.com', '$2b$12$lCu2ZtRKleZ9HQw0LErqYObr1aiigqDjOYTgNnTJnDNjYOCCSqsta', 'Test User');
 
@@ -144,17 +148,22 @@ GRANT ALL ON public.users TO service_role;
 GRANT ALL ON public.scan_history TO service_role;
 GRANT SELECT ON user_statistics TO service_role;
 
+-- Grant untuk sequences (diperlukan agar auto-increment berfungsi)
+GRANT USAGE, SELECT ON SEQUENCE public.users_id_seq TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE public.scan_history_id_seq TO service_role;
+
 -- ================================================================================
 -- NOTES:
 -- ================================================================================
--- 1. Password hash menggunakan bcrypt dengan cost 12
--- 2. Sample password untuk testing: "password123"
--- 3. RLS policies sementara allow all untuk development
--- 4. Untuk production, sesuaikan RLS policies dengan auth.uid()
--- 5. Email format divalidasi dengan regex
--- 6. Phone format divalidasi (optional field)
--- 7. Confidence range 0-100
--- 8. Waste category hanya 3 pilihan
+-- 1. ID sekarang menggunakan SERIAL (auto-increment: 1, 2, 3, dst)
+-- 2. Password hash menggunakan bcrypt dengan cost 12
+-- 3. Sample password untuk testing: "password123"
+-- 4. RLS policies sementara allow all untuk development
+-- 5. Untuk production, sesuaikan RLS policies dengan auth.uid()
+-- 6. Email format divalidasi dengan regex
+-- 7. Phone format divalidasi (optional field)
+-- 8. Confidence range 0-100
+-- 9. Waste category hanya 3 pilihan
 --
 -- CARA PENGGUNAAN DI SUPABASE:
 -- 1. Login ke https://app.supabase.com
@@ -167,4 +176,3 @@ GRANT SELECT ON user_statistics TO service_role;
 -- CARA TEST LOGIN:
 -- Email: admin@pilar.com
 -- Password: password123
--- ================================================================================

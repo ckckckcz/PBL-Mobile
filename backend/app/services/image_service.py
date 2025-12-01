@@ -1,11 +1,12 @@
 """
 Image preprocessing service for waste classification model
+Dioptimalkan untuk match hasil preprocessing di Colab
 """
 
 import numpy as np
 from PIL import Image
-from typing import Tuple
 import logging
+from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 class ImagePreprocessor:
     """
     Service for preprocessing images for XGBoost Hybrid model
+    Preprocessing harus EXACTLY sama dengan Colab notebook
     """
 
     def __init__(self, target_size: Tuple[int, int] = (16, 16)):
@@ -20,77 +22,100 @@ class ImagePreprocessor:
         Initialize image preprocessor
 
         Args:
-            target_size: Target image size for resizing (width, height)
+            target_size: Target image size for resizing (default: 16x16 sesuai Colab)
         """
         self.target_size = target_size
+        self.n_features = 38  # Model expects exactly 38 features
 
-    def preprocess(self, image: Image.Image) -> np.ndarray:
+    def preprocess(self, image: Image. Image) -> np.ndarray:
         """
-        Preprocess image untuk prediksi model XGBoost Hybrid
-        Extract 31 features yang sesuai dengan model training
+        Preprocess image EXACTLY seperti di Colab notebook
+
+        Steps:
+        1. Convert to RGB
+        2. Resize to 16x16
+        3. Convert to grayscale
+        4. Flatten dan normalize to 0-1
+        5.  Extract 38 features dengan downsampling
 
         Args:
             image: PIL Image object
 
         Returns:
-            np.ndarray: Preprocessed image features with shape (1, 31)
+            np.ndarray: Preprocessed image features with shape (1, 38)
 
         Raises:
             Exception: If preprocessing fails
         """
         try:
-            # Convert to RGB jika diperlukan
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-                logger.info(f"[PREPROCESS] Converted image from {image.mode} to RGB")
+            logger.info(f"[PREPROCESS] Input image mode: {image.mode}, size: {image.size}")
 
-            # Resize image ke target size untuk extract features
-            image = image.resize(self.target_size, Image.Resampling.LANCZOS)
-            logger.info(f"[PREPROCESS] Resized image to {self.target_size}")
+            # Step 1: Convert ke RGB (Colab juga convert semua ke RGB)
+            if image.mode != 'RGB':
+                logger.info(f"[PREPROCESS] Converting from {image.mode} to RGB")
+                image = image.convert('RGB')
+
+            # Step 2: Resize ke 16x16 (EXACT sama dengan Colab)
+            image_resized = image.resize(self.target_size, Image. Resampling.LANCZOS)
+            logger.info(f"[PREPROCESS] ✓ Resized to {self.target_size}")
 
             # Convert to numpy array
-            img_array = np.array(image, dtype=np.uint8)
+            img_array = np.array(image_resized, dtype=np.uint8)
+            logger.info(f"[PREPROCESS] Array shape: {img_array.shape}, dtype: {img_array.dtype}")
 
-            # Convert RGB to grayscale
-            if len(img_array.shape) == 3:
+            # Step 3: Convert RGB to Grayscale menggunakan standard formula
+            # R: 0.299, G: 0.587, B: 0.114 (ITU-R BT.601 standard)
+            if len(img_array.shape) == 3 and img_array.shape[2] == 3:
                 img_gray = (
-                    0.299 * img_array[:, :, 0].astype(np.float32) +
+                    0.299 * img_array[:, :, 0]. astype(np.float32) +
                     0.587 * img_array[:, :, 1].astype(np.float32) +
                     0.114 * img_array[:, :, 2].astype(np.float32)
                 )
-                img_gray = img_gray.astype(np.uint8)
+                img_gray = img_gray. astype(np.uint8)
+                logger.info(f"[PREPROCESS] ✓ Converted to grayscale, shape: {img_gray.shape}")
             else:
                 img_gray = img_array
+                logger.warning(f"[PREPROCESS] Image already grayscale or unexpected shape")
 
-            # Flatten image and normalize to 0-1
-            img_flat = img_gray.flatten().astype(np.float32) / 255.0
+            # Step 4: Flatten dan normalize to 0-1 range
+            img_flat = img_gray.flatten(). astype(np.float32) / 255.0
+            logger.info(f"[PREPROCESS] ✓ Flattened to {len(img_flat)} pixels, normalized to 0-1")
 
-            # Reduce to 31 features by taking every 8th element (skip last one)
-            # (256 pixels / 8 = 32, then take first 31)
-            features_31 = img_flat[::8][:31]
+            # Step 5: Extract 38 features dari 256 pixels (16x16)
+            # Method: downsampling dengan step = 6
+            # 256 pixels / 6 ≈ 42.67, ambil first 38
+            features_list = []
+            for i in range(0, len(img_flat), 6):
+                if len(features_list) < 38:
+                    features_list.append(img_flat[i])
 
-            # Ensure exactly 31 features
-            if len(features_31) > 31:
-                features_31 = features_31[:31]
-            elif len(features_31) < 31:
-                features_31 = np.pad(
-                    features_31,
-                    (0, 31 - len(features_31)),
-                    mode='constant'
+            features_38 = np.array(features_list, dtype=np. float32)
+            logger.info(f"[PREPROCESS] Downsampled to {len(features_38)} features")
+
+            # Pad jika kurang dari 38
+            if len(features_38) < 38:
+                features_38 = np.pad(
+                    features_38,
+                    (0, 38 - len(features_38)),
+                    mode='constant',
+                    constant_values=0
                 )
+                logger.info(f"[PREPROCESS] Padded to 38 features")
 
-            # Reshape untuk model: (1, 31)
-            features_31 = features_31.reshape(1, -1)
+            # Reshape ke (1, 38) untuk model
+            features_38 = features_38.reshape(1, -1)
 
             logger.info(
-                f"[PREPROCESS] Features shape: {features_31.shape}, "
-                f"n_features: {features_31.shape[1]}"
+                f"[PREPROCESS] ✓ Final features shape: {features_38.shape}, "
+                f"dtype: {features_38.dtype}, "
+                f"min: {features_38.min():.4f}, max: {features_38.max():.4f}"
             )
 
-            return features_31
+            return features_38
 
         except Exception as e:
-            logger.error(f"[PREPROCESS] Error preprocessing image: {e}")
+            logger.error(f"[PREPROCESS] ✗ Error preprocessing image: {str(e)}")
+            logger.exception(e)
             raise
 
 

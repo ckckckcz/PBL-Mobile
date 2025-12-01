@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 # Configuration
-MODEL_URL = "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_v2.pkl"
+MODEL_URL = "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_terbaru_v2.pkl"
 
 def test_supabase_model_access():
     """Test akses ke model di Supabase Storage"""
@@ -147,7 +147,7 @@ def compare_with_local():
     print("COMPARING SUPABASE MODEL WITH LOCAL MODEL")
     print("=" * 80)
 
-    local_path = Path("model/model_v2.pkl")
+    local_path = Path("model/model_terbaru_v2.pkl")
 
     if not local_path.exists():
         print(f"\n⚠ Local model not found at: {local_path}")

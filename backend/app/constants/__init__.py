@@ -8,7 +8,6 @@ from .waste_data import (
     CATEGORY_MAPPING,
     ORGANIC_KEYWORDS,
     INORGANIC_KEYWORDS,
-    B3_KEYWORDS,
 )
 
 __all__ = [
@@ -17,5 +16,4 @@ __all__ = [
     "CATEGORY_MAPPING",
     "ORGANIC_KEYWORDS",
     "INORGANIC_KEYWORDS",
-    "B3_KEYWORDS",
 ]

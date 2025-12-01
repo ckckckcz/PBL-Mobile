@@ -27,7 +27,6 @@ class AppColors {
   // Category Colors
   static const Color categoryOrganic = Color(0xFF4CAF50);
   static const Color categoryInorganic = Color(0xFF2196F3);
-  static const Color categoryB3 = Color(0xFFF44336);
 
   // Status Colors
   static const Color success = Color(0xFF4CAF50);
@@ -61,9 +60,6 @@ class AppColors {
       case 'anorganik':
       case 'inorganic':
         return categoryInorganic;
-      case 'b3':
-      case 'hazardous':
-        return categoryB3;
       default:
         return textTertiary;
     }
@@ -78,9 +74,6 @@ class AppColors {
       case 'anorganik':
       case 'inorganic':
         return PhosphorIcons.recycle(PhosphorIconsStyle.regular);
-      case 'b3':
-      case 'hazardous':
-        return PhosphorIcons.warningCircle(PhosphorIconsStyle.regular);
       default:
         return PhosphorIcons.question(PhosphorIconsStyle.regular);
     }

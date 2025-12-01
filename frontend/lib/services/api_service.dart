@@ -14,13 +14,14 @@ class ApiService {
   // - Android Emulator: http://10.0.2.2:8000
   // - iOS Simulator: http://localhost:8000
   // - Physical Device: http://YOUR_COMPUTER_IP:8000
-  static const String baseUrl = 'http://192.168.1.3:8000';
+  static const String baseUrl = 'http://192.168.58.137:8000';
   // static const String baseUrl = 'http://192.168.1.100:8000';
 
   // Endpoints
   static const String loginEndpoint = '/api/auth/login';
   static const String registerEndpoint = '/api/auth/register';
   static const String forgotPasswordEndpoint = '/api/auth/forgot-password';
+  static const String resetPasswordEndpoint = '/api/auth/reset-password';
   static const String changePasswordEndpoint = '/api/auth/change-password';
   static const String meEndpoint = '/api/auth/me';
   static const String logoutEndpoint = '/api/auth/logout';
@@ -254,6 +255,54 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during forgot password: $e');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  /// Reset password (for forgot password flow)
+  /// Returns: {success, message}
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl$resetPasswordEndpoint');
+      final body = json.encode({
+        'email': email,
+        'new_password': newPassword,
+      });
+
+      print('[API] POST $url');
+      print(
+          '[API] Body: ${body.replaceAll('"new_password": "$newPassword"', '"new_password": "***"')}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(),
+        body: body,
+      );
+
+      print('[API] Response status: ${response.statusCode}');
+      print('[API] Response body: ${response.body}');
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Kata sandi berhasil diubah',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['detail'] ?? 'Gagal mengubah kata sandi',
+        };
+      }
+    } catch (e) {
+      print('[API] Error during reset password: $e');
       return {
         'success': false,
         'message': 'Terjadi kesalahan: $e',

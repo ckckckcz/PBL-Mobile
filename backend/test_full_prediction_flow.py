@@ -22,8 +22,8 @@ def test_full_flow():
     print("=" * 80)
 
     # Configuration
-    MODEL_URL = "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_v2.pkl"
-    LOCAL_MODEL_PATH = Path("model/model_v2.pkl")
+    MODEL_URL = "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_terbaru_v2.pkl"
+    LOCAL_MODEL_PATH = Path("model/model_terbaru_v2.pkl")
 
     # Step 1: Initialize Model Service
     print("\n[STEP 1] Initializing Model Service...")

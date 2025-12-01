@@ -45,11 +45,26 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=255)
     phone: Optional[str] = Field(None, max_length=20)
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str = Field(..., min_length=6)
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=6)
+
 class LoginResponse(BaseModel):
     success: bool
     message: str
     data: Optional[dict] = None
     token: Optional[str] = None
+
+class StandardResponse(BaseModel):
+    success: bool
+    message: str
 
 class UserResponse(BaseModel):
     id: str
@@ -184,7 +199,7 @@ async def login(request: LoginRequest):
 
         # Prepare user data (exclude password_hash)
         user_data = {
-            "id": user['id'],
+            "id": str(user['id']),  # Convert to string for Flutter compatibility
             "email": user['email'],
             "full_name": user['full_name'],
             "phone": user.get('phone'),
@@ -271,7 +286,7 @@ async def register(request: RegisterRequest):
 
         # Prepare user data
         user_data = {
-            "id": user['id'],
+            "id": str(user['id']),  # Convert to string for Flutter compatibility
             "email": user['email'],
             "full_name": user['full_name'],
             "phone": user.get('phone'),
@@ -325,7 +340,7 @@ async def get_current_user_data(user_id: str = Depends(get_current_user)):
 
         # Prepare user data (exclude password_hash)
         user_data = {
-            "id": user['id'],
+            "id": str(user['id']),  # Convert to string for Flutter compatibility
             "email": user['email'],
             "full_name": user['full_name'],
             "phone": user.get('phone'),
@@ -358,6 +373,202 @@ async def logout(user_id: str = Depends(get_current_user)):
         "success": True,
         "message": "Logout berhasil"
     }
+
+@router.post("/forgot-password", response_model=StandardResponse)
+async def forgot_password(request: ForgotPasswordRequest):
+    """
+    Forgot password endpoint - Verify email exists
+
+    - **email**: Email user yang terdaftar
+
+    Returns:
+    - Success message jika email ditemukan
+    - Error jika email tidak terdaftar
+
+    Note: Endpoint ini hanya verify email.
+    Untuk reset password, gunakan /reset-password
+    """
+    logger.info(f"[FORGOT_PASSWORD] Request for email: {request.email}")
+
+    try:
+        # Check if email exists
+        response = supabase.table('users').select('id, email, full_name').eq('email', request.email).execute()
+
+        if response.data and len(response.data) > 0:
+            logger.info(f"[FORGOT_PASSWORD] ✓ Email found: {request.email}")
+            return StandardResponse(
+                success=True,
+                message="Email ditemukan. Silakan masukkan kata sandi baru Anda."
+            )
+        else:
+            logger.warning(f"[FORGOT_PASSWORD] Email not found: {request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Email tidak terdaftar dalam sistem kami."
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[FORGOT_PASSWORD] Error: {e}")
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Terjadi kesalahan pada server. Silakan coba lagi."
+        )
+
+
+@router.post("/reset-password", response_model=StandardResponse)
+async def reset_password(request: ResetPasswordRequest):
+    """
+    Reset password endpoint (tanpa email verification)
+
+    - **email**: Email user yang terdaftar
+    - **new_password**: Password baru (minimal 6 karakter)
+
+    Returns:
+    - Success message jika password berhasil direset
+
+    Note: Untuk development tanpa email verification.
+    Di production, tambahkan token/OTP verification.
+    """
+    logger.info(f"[RESET_PASSWORD] Request for email: {request.email}")
+
+    try:
+        # Check if email exists
+        response = supabase.table('users').select('*').eq('email', request.email).execute()
+
+        if not response.data or len(response.data) == 0:
+            logger.warning(f"[RESET_PASSWORD] Email not found: {request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Email tidak terdaftar dalam sistem kami."
+            )
+
+        user = response.data[0]
+
+        # Check if new password is same as current (optional security)
+        if verify_password(request.new_password, user['password_hash']):
+            logger.warning(f"[RESET_PASSWORD] New password same as current for: {request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Kata sandi baru tidak boleh sama dengan kata sandi lama."
+            )
+
+        # Hash new password
+        new_password_hash = hash_password(request.new_password)
+
+        # Update password
+        update_response = supabase.table('users').update({
+            'password_hash': new_password_hash,
+            'updated_at': datetime.utcnow().isoformat()
+        }).eq('id', user['id']).execute()
+
+        if not update_response.data or len(update_response.data) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Gagal mengubah kata sandi. Silakan coba lagi."
+            )
+
+        logger.info(f"[RESET_PASSWORD] ✓ Password reset successfully for: {request.email}")
+
+        return StandardResponse(
+            success=True,
+            message="Kata sandi berhasil diubah. Silakan login dengan kata sandi baru Anda."
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[RESET_PASSWORD] Error: {e}")
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Terjadi kesalahan pada server. Silakan coba lagi."
+        )
+
+
+@router.post("/change-password", response_model=StandardResponse)
+async def change_password(
+    request: ChangePasswordRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Change password endpoint (requires authentication)
+
+    Headers:
+    - **Authorization**: Bearer {token}
+
+    Request Body:
+    - **current_password**: Password saat ini
+    - **new_password**: Password baru (minimal 6 karakter)
+
+    Returns:
+    - Success message jika password berhasil diubah
+    """
+    logger.info(f"[CHANGE_PASSWORD] Request from user: {user_id}")
+
+    try:
+        # Get user data
+        response = supabase.table('users').select('*').eq('id', user_id).execute()
+
+        if not response.data or len(response.data) == 0:
+            logger.warning(f"[CHANGE_PASSWORD] User not found: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User tidak ditemukan"
+            )
+
+        user = response.data[0]
+
+        # Verify current password
+        if not verify_password(request.current_password, user['password_hash']):
+            logger.warning(f"[CHANGE_PASSWORD] Invalid current password for user: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Kata sandi saat ini salah"
+            )
+
+        # Check if new password is same as current
+        if verify_password(request.new_password, user['password_hash']):
+            logger.warning(f"[CHANGE_PASSWORD] New password same as current for user: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Kata sandi baru tidak boleh sama dengan kata sandi saat ini"
+            )
+
+        # Hash new password
+        new_password_hash = hash_password(request.new_password)
+
+        # Update password
+        update_response = supabase.table('users').update({
+            'password_hash': new_password_hash,
+            'updated_at': datetime.utcnow().isoformat()
+        }).eq('id', user_id).execute()
+
+        if not update_response.data or len(update_response.data) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Gagal mengubah kata sandi. Silakan coba lagi."
+            )
+
+        logger.info(f"[CHANGE_PASSWORD] ✓ Password changed successfully for user: {user_id}")
+
+        return StandardResponse(
+            success=True,
+            message="Kata sandi berhasil diubah"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[CHANGE_PASSWORD] Error: {e}")
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Terjadi kesalahan pada server. Silakan coba lagi."
+        )
+
 
 @router.get("/test")
 async def test_auth():

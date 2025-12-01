@@ -1,12 +1,13 @@
 """
 Prediction endpoints for waste classification
+Enhanced with detailed logging untuk debug
 """
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from PIL import Image
 import io
 import logging
-from typing import Dict, Any
+from typing import Dict, Any    
 from .. models.schemas import PredictionResponse, ErrorResponse
 from ..services.model_service import get_model_service
 from ..services.prediction_service import get_prediction_service
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/api", tags=["Prediction"])
 async def predict_waste(file: UploadFile = File(... )):
     """
     Endpoint untuk prediksi jenis sampah dari gambar
+    CRITICAL: Image preprocessing harus EXACT same dengan Colab
 
     Args:
         file: Image file untuk diprediksi
@@ -53,7 +55,7 @@ async def predict_waste(file: UploadFile = File(... )):
             detail="Prediction service belum diinisialisasi"
         )
 
-    # Validate file type - accept image/* dan application/octet-stream
+    # Validate file type
     if file.content_type:
         is_image = file.content_type.startswith("image/")
         is_octet_stream = file.content_type == "application/octet-stream"
@@ -75,7 +77,7 @@ async def predict_waste(file: UploadFile = File(... )):
         # Read file contents
         logger.info("[PREDICT] Reading file contents...")
         contents = await file.read()
-        logger.info(f"[PREDICT] File size: {len(contents)} bytes")
+        logger.info(f"[PREDICT] ✓ File size: {len(contents)} bytes")
 
         if len(contents) == 0:
             logger.error("[PREDICT] ✗ File is empty!")
@@ -89,14 +91,16 @@ async def predict_waste(file: UploadFile = File(... )):
         image = Image.open(io.BytesIO(contents))
         logger.info(f"[PREDICT] ✓ Image opened - Size: {image.size}, Mode: {image.mode}")
 
-        # Preprocess image
-        logger.info("[PREDICT] Preprocessing image...")
+        # Preprocess image - CRITICAL: Must be EXACT same as Colab
+        logger.info("[PREDICT] ===== IMAGE PREPROCESSING START =====")
         image_preprocessor = get_image_preprocessor()
         processed_features = image_preprocessor.preprocess(image)
         logger.info(f"[PREDICT] ✓ Image preprocessed - Shape: {processed_features.shape}")
+        logger.info(f"[PREDICT] Features range: min={processed_features.min():.4f}, max={processed_features.max():.4f}")
+        logger.info("[PREDICT] ===== IMAGE PREPROCESSING END =====")
 
         # Perform prediction
-        logger.info("[PREDICT] Running prediction...")
+        logger.info("[PREDICT] ===== PREDICTION START =====")
         prediction_result = prediction_service.predict(processed_features)
 
         # Format response
@@ -113,7 +117,9 @@ async def predict_waste(file: UploadFile = File(... )):
         if 'data' in response and 'modelInfo' in response['data']:
             probs_per_class = response['data']['modelInfo'].get('probabilitiesPerClass', {})
             if probs_per_class:
-                logger.info(f"[PREDICT] ===== Response includes {len(probs_per_class)} class probabilities =====")
+                logger.info(f"[PREDICT] Probabilities per class:")
+                for class_name, prob_data in probs_per_class.items():
+                    logger.info(f"  - {class_name}: {prob_data['probability']}%")
 
         return response
 
@@ -121,7 +127,7 @@ async def predict_waste(file: UploadFile = File(... )):
         raise
     except Exception as e:
         logger.error(f"[PREDICT] ===== PREDICTION FAILED =====")
-        logger. error(f"[PREDICT] Error: {str(e)}")
+        logger.error(f"[PREDICT] Error: {str(e)}")
         logger.exception(e)
         raise HTTPException(
             status_code=500,

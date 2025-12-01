@@ -20,7 +20,7 @@ def test_prediction():
     print("=" * 80)
 
     # Load model
-    model_path = Path("model/model_v2.pkl")
+    model_path = Path("model/model_terbaru_v2.pkl")
     print(f"\n[1] Loading model from: {model_path}")
     print(f"    Model exists: {model_path.exists()}")
 
@@ -36,12 +36,21 @@ def test_prediction():
     prediction_service = PredictionService(model)
     print(f"    ✓ Services initialized")
 
-    # Test with dummy image (create a grayscale gradient image)
-    print(f"\n[3] Creating test image...")
-    # Create 16x16 grayscale image with pattern
-    img_array = np.random.randint(0, 255, (16, 16, 3), dtype=np.uint8)
-    test_image = Image.fromarray(img_array)
-    print(f"    ✓ Test image created: {test_image.size}, mode: {test_image.mode}")
+    # Test with real image from dataset
+    print(f"\n[3] Loading test image...")
+    # Try to find a real image in the dataset
+    dataset_path = Path(__file__).parent / "dataset"
+    image_files = list(dataset_path.glob("**/*.jpg")) + list(dataset_path.glob("**/*.png"))
+    
+    if image_files:
+        test_image_path = image_files[0]
+        test_image = Image.open(test_image_path).convert('RGB')
+        print(f"    ✓ Test image loaded: {test_image_path.name}")
+    else:
+        print(f"    ⚠ No dataset images found, creating dummy image")
+        test_image = Image.new('RGB', (256, 256), color=(100, 100, 100))
+    
+    print(f"    Image size: {test_image.size}, mode: {test_image.mode}")
 
     # Preprocess image
     print(f"\n[4] Preprocessing image...")

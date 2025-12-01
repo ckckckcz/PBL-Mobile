@@ -1,9 +1,10 @@
 """
 Prediction service for waste classification
+Dioptimalkan untuk matching Colab results
 """
 
 import numpy as np
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,28 +54,6 @@ WASTE_TIPS = {
             "title": "Setorkan ke bank sampah terdekat",
             "color": "#10B981"
         }
-    ],
-    "B3": [
-        {
-            "title": "Jangan buang sembarangan, berbahaya! ",
-            "color": "#EF4444"
-        },
-        {
-            "title": "Simpan dalam wadah tertutup khusus",
-            "color": "#F59E0B"
-        },
-        {
-            "title": "Serahkan ke tempat pengolahan B3",
-            "color": "#8B5CF6"
-        },
-        {
-            "title": "Jauhkan dari jangkauan anak-anak",
-            "color": "#EF4444"
-        },
-        {
-            "title": "Gunakan label peringatan pada wadah",
-            "color": "#10B981"
-        }
     ]
 }
 
@@ -92,7 +71,7 @@ class PredictionService:
             model: Dictionary containing model components
         """
         self.model_dict = model
-        self.xgb_model = model. get('model')
+        self.xgb_model = model.get('model')
         self.scaler = model.get('scaler')
         self.label_encoder = model.get('label_encoder')
         self.waste_map = model.get('waste_map', {})
@@ -101,8 +80,9 @@ class PredictionService:
         logger.info(f"[INIT] XGBoost model: {type(self.xgb_model).__name__}")
         logger.info(f"[INIT] Scaler: {type(self.scaler).__name__}")
         logger.info(f"[INIT] Label encoder: {type(self.label_encoder).__name__}")
-        logger. info(f"[INIT] Waste map: {self.waste_map}")
+        logger.info(f"[INIT] Waste map: {self.waste_map}")
         logger.info(f"[INIT] Threshold: {self.threshold}")
+        logger.info(f"[INIT] Label encoder classes: {list(self.label_encoder.classes_)}")
 
     def _format_probability_line(
         self,
@@ -130,11 +110,9 @@ class PredictionService:
         # Calculate percentage
         prob_percentage = probability * 100
 
-        # Format: padding 20 chars for name, 6 chars for percentage with 2 decimals
-        # This matches: "    Kaca                :  91.21% -> Sampah Anorganik"
         formatted_line = (
             f"    {formatted_name:<20}: {prob_percentage:>6.2f}% -> "
-            f"Sampah {category. title()}"
+            f"Sampah {category.title()}"
         )
 
         return formatted_line
@@ -156,7 +134,7 @@ class PredictionService:
 
         # Iterate through all classes in order
         for idx, class_name in enumerate(self.label_encoder.classes_):
-            if probabilities. shape[1] > idx:
+            if probabilities.shape[1] > idx:
                 prob_value = float(probabilities[0][idx])
                 line = self._format_probability_line(class_name, prob_value)
                 lines.append(line)
@@ -179,9 +157,10 @@ class PredictionService:
     def predict(self, features: np.ndarray) -> Dict[str, Any]:
         """
         Perform prediction on preprocessed image features
+        CRITICAL: Features harus sudah di-preprocess dengan image_preprocessor. py
 
         Args:
-            features: Preprocessed image features (shape: 1, 31)
+            features: Preprocessed image features (shape: 1, 38)
 
         Returns:
             Dict containing prediction results with confidence and probabilities
@@ -190,28 +169,33 @@ class PredictionService:
             Exception: If prediction fails
         """
         try:
-            logger.info(f"[PREDICT] Input features shape: {features.shape}")
+            logger.info(f"[PREDICT] Input features shape: {features.shape}, dtype: {features.dtype}")
+            logger.info(f"[PREDICT] Features range: min={features.min():.4f}, max={features.max():.4f}")
 
-            # Scale features using MinMaxScaler
-            logger.info("[PREDICT] Scaling features with MinMaxScaler...")
-            scaled_features = self.scaler. transform(features)
-            logger.info(f"[PREDICT] Scaled features shape: {scaled_features.shape}")
+            # CRITICAL: Scale features menggunakan EXACT scaler dari model training
+            logger.info("[PREDICT] Scaling features dengan MinMaxScaler...")
+            scaled_features = self.scaler.transform(features)
+            logger.info(f"[PREDICT] ✓ Scaled features shape: {scaled_features.shape}")
+            logger.info(f"[PREDICT] Scaled range: min={scaled_features.min():.4f}, max={scaled_features.max():.4f}")
 
-            # Predict with XGBoost
-            logger. info("[PREDICT] XGBoost predicting...")
+            # Perform XGBoost prediction
+            logger.info("[PREDICT] XGBoost predicting...")
             prediction = self.xgb_model.predict(scaled_features)
-            logger.info(f"[PREDICT] Raw prediction: {prediction}")
+            logger.info(f"[PREDICT] ✓ Raw prediction (class index): {prediction}")
 
-            # Get probabilities
+            # Get probabilities - VERY IMPORTANT untuk akurasi prediksi
             probabilities = None
             confidence = 85.0  # Default confidence
             formatted_probs_string = ""
 
-            if hasattr(self. xgb_model, 'predict_proba'):
+            if hasattr(self.xgb_model, 'predict_proba'):
                 probabilities = self.xgb_model.predict_proba(scaled_features)
+                logger.info(f"[PREDICT] ✓ Probabilities shape: {probabilities.shape}")
+                logger.info(f"[PREDICT] ✓ All probabilities: {probabilities}")
+
+                # Get confidence dari highest probability
                 confidence = float(np.max(probabilities) * 100)
-                logger.info(f"[PREDICT] Probabilities shape: {probabilities.shape}")
-                logger. info(f"[PREDICT] Max confidence: {confidence}%")
+                logger.info(f"[PREDICT] ✓ Max confidence: {confidence:.2f}%")
 
                 # Log detailed class probabilities in Colab format
                 self._log_probabilities(probabilities)
@@ -219,20 +203,29 @@ class PredictionService:
                 # Get formatted string for response
                 formatted_probs_string = self._get_formatted_probabilities_string(probabilities)
             else:
-                logger.warning("[PREDICT] Model doesn't have predict_proba, using default confidence")
+                logger.warning("[PREDICT] ⚠️ Model doesn't have predict_proba, using default confidence")
 
             # Decode prediction using label encoder
             pred_idx = int(prediction[0])
+            logger.info(f"[PREDICT] Prediction index: {pred_idx}")
+
             waste_class = self.label_encoder.inverse_transform([pred_idx])[0]
-            logger.info(f"[PREDICT] Decoded waste class: {waste_class}")
+            logger.info(f"[PREDICT] ✓ Decoded waste class: {waste_class}")
 
             # Map to category using waste_map
             category = self.waste_map.get(waste_class, "ANORGANIK")
-            logger.info(f"[PREDICT] Category from waste_map: {category}")
+            logger.info(f"[PREDICT] Mapped category: {category}")
 
-            # Format waste type name (capitalize first letter of each word)
+            # Remap B3 dan unknown ke ANORGANIK
+            if category.upper() in ["B3", "UNKNOWN"]:
+                logger.info(f"[PREDICT] ⚠️ Category {category} → Remapped to ANORGANIK")
+                category = "ANORGANIK"
+
+            logger.info(f"[PREDICT] ✓ Final category: {category}")
+
+            # Format waste type name
             waste_type = waste_class.replace('_', ' ').title()
-            logger. info(f"[PREDICT] Formatted waste type: {waste_type}")
+            logger.info(f"[PREDICT] ✓ Formatted waste type: {waste_type}")
 
             return {
                 "waste_class": waste_class,
@@ -244,7 +237,7 @@ class PredictionService:
             }
 
         except Exception as e:
-            logger.error(f"[PREDICT] Error during prediction: {e}")
+            logger.error(f"[PREDICT] ✗ Error during prediction: {e}")
             logger.exception(e)
             raise
 
@@ -279,20 +272,20 @@ class PredictionService:
                 "tips": tips,
                 "description": f"{waste_type} termasuk dalam kategori Sampah {category.title()}",
                 "modelInfo": {
-                    "confidenceSource": "XGBoost. predict_proba() - probability of predicted class",
+                    "confidenceSource": "XGBoost.predict_proba() - probability of predicted class",
                     "pipeline": {
                         "step_1": "Image → Resize to 16x16 and convert to grayscale",
                         "step_2": "Flatten and normalize to 0-1 (256 pixels)",
-                        "step_3": "Extract 31 features by downsampling",
-                        "step_4": "MinMaxScaler. transform(31 features) → scaled features",
-                        "step_5": "XGBoost. predict(31 features) → class prediction",
+                        "step_3": "Extract 38 features by downsampling (every 6th pixel)",
+                        "step_4": "MinMaxScaler.transform(38 features) → scaled features",
+                        "step_5": "XGBoost.predict(38 features) → class prediction",
                         "step_6": "LabelEncoder.inverse_transform() → waste class name",
-                        "step_7": "waste_map lookup → category (ORGANIK/ANORGANIK/B3)",
-                        "step_8": "XGBoost.predict_proba(31 features) → confidence"
+                        "step_7": "waste_map lookup → category (ORGANIK/ANORGANIK), B3/UNKNOWN remapped to ANORGANIK",
+                        "step_8": "XGBoost.predict_proba(38 features) → confidence"
                     },
                     "modelComponents": {
                         "xgb_model_type": type(self.xgb_model).__name__,
-                        "scaler_type": type(self.scaler).__name__,
+                        "scaler_type": type(self. scaler).__name__,
                         "label_encoder_type": type(self.label_encoder).__name__,
                         "n_classes": len(self.label_encoder.classes_),
                         "classes": list(self.label_encoder.classes_),
@@ -322,7 +315,7 @@ class PredictionService:
 
         result = {}
 
-        for idx, class_name in enumerate(self.label_encoder. classes_):
+        for idx, class_name in enumerate(self.label_encoder.classes_):
             if probabilities.shape[1] > idx:
                 prob_value = round(float(probabilities[0][idx]) * 100, 2)
                 category = self.waste_map.get(class_name, "ANORGANIK")
@@ -351,7 +344,7 @@ def init_prediction_service(model: Dict[str, Any]) -> PredictionService:
     """
     global _prediction_service
     _prediction_service = PredictionService(model)
-    logger.info("[SERVICE] Prediction service initialized")
+    logger.info("[SERVICE] ✓ Prediction service initialized")
     return _prediction_service
 
 

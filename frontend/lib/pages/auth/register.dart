@@ -16,7 +16,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -38,7 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
       print('Form validation failed');
       return;
     }
-    
+
     // Cek persetujuan syarat dan ketentuan
     if (!_agreeToTerms) {
       _showErrorSnackBar('Anda harus menyetujui syarat dan ketentuan');
@@ -57,22 +57,30 @@ class _RegisterPageState extends State<RegisterPage> {
       print('Starting registration process...');
       print('Email: ${_emailController.text.trim()}');
       print('Name: ${_nameController.text.trim()}');
-      
+
       final result = await ApiService().register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         fullName: _nameController.text.trim(),
-        phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+        phone: _phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
+            : null,
       );
 
       print('Registration response: $result');
 
       if (result['success'] == true) {
-        _showSuccessSnackBar('Registrasi berhasil! Silakan login.');
+        _showSuccessSnackBar('Registrasi berhasil! Selamat datang di PILAR!');
+        // Token dan user data sudah disimpan oleh ApiService
         // Beri jeda sebelum navigasi agar snackbar terlihat
         await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login');
+          // Langsung ke home karena backend sudah memberikan token
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (route) => false,
+          );
         }
       } else {
         final errorMessage = result['message'] ?? 'Registrasi gagal';
@@ -345,7 +353,8 @@ class _RegisterPageState extends State<RegisterPage> {
               if (value == null || value.trim().isEmpty) {
                 return 'Email harus diisi';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value)) {
                 return 'Format email tidak valid';
               }
               return null;
@@ -392,7 +401,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
               suffixIcon: IconButton(
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
                   color: const Color(0xFF757575),
@@ -454,9 +464,12 @@ class _RegisterPageState extends State<RegisterPage> {
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
               suffixIcon: IconButton(
-                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                onPressed: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword),
                 icon: Icon(
-                  _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   color: const Color(0xFF757575),
                 ),
               ),

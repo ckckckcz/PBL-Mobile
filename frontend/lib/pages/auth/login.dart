@@ -5,8 +5,6 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../services/api_service.dart';
 import '../../utils/validators.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,6 +24,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // State
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -269,24 +268,126 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Build email field
   Widget _buildEmailField() {
-    return CustomTextField.email(
-      controller: _emailController,
-      label: AppStrings.email,
-      hint: 'contoh@email.com',
-      validator: Validators.email,
-      enabled: !_isLoading,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Email',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              hintText: 'contoh@email.com',
+              hintStyle: TextStyle(
+                color: Color(0xFF9E9E9E),
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Email harus diisi';
+              }
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value)) {
+                return 'Format email tidak valid';
+              }
+              return null;
+            },
+            enabled: !_isLoading,
+          ),
+        ),
+      ],
     );
   }
 
   /// Build password field
   Widget _buildPasswordField() {
-    return CustomTextField.password(
-      controller: _passwordController,
-      label: AppStrings.password,
-      hint: 'Masukkan password',
-      validator: Validators.password,
-      enabled: !_isLoading,
-      onSubmitted: (_) => _handleLogin(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Kata Sandi',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            decoration: InputDecoration(
+              hintText: 'Masukkan kata sandi',
+              hintStyle: const TextStyle(
+                color: Color(0xFF9E9E9E),
+              ),
+              border: const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFF757575),
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Kata sandi harus diisi';
+              }
+              if (value.length < 6) {
+                return 'Kata sandi minimal 6 karakter';
+              }
+              return null;
+            },
+            enabled: !_isLoading,
+            onFieldSubmitted: (_) => _handleLogin(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -315,11 +416,39 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Build login button
   Widget _buildLoginButton() {
-    return CustomButton.primary(
-      text: AppStrings.login,
-      onPressed: _isLoading ? null : _handleLogin,
-      isLoading: _isLoading,
+    return Container(
+      width: double.infinity,
       height: 56,
+      decoration: BoxDecoration(
+        color: const Color(0xFF4CAF50),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isLoading ? null : _handleLogin,
+          borderRadius: BorderRadius.circular(8),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Masuk',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+          ),
+        ),
+      ),
     );
   }
 

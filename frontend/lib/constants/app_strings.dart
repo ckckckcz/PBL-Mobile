@@ -137,8 +137,6 @@ class AppStrings {
   // Category Names
   static const String categoryOrganic = 'Organik';
   static const String categoryInorganic = 'Anorganik';
-  static const String categoryB3 = 'B3';
-  static const String categoryUnknown = 'Tidak Diketahui';
 
   // Date Format
   static String formatDate(DateTime date) {

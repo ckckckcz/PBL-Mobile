@@ -21,6 +21,9 @@ from .services.prediction_service import init_prediction_service
 from .api import health, predict, users
 from .auth import router as auth_router
 
+# Constants
+from app.constants.waste_data import WASTE_TIPS, CATEGORY_MAPPING
+
 # Setup logger
 logger = setup_logger(__name__)
 
@@ -83,12 +86,12 @@ async def startup_event():
     # Get model URL from environment variable
     MODEL_URL = os.getenv(
         "MODEL_URL",
-        "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_v2.pkl"
+        "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_terbaru_v2.pkl"
     )
 
     # Local model path as fallback
     BASE_DIR = Path(__file__).resolve().parent.parent
-    MODEL_PATH = BASE_DIR / "model" / "model_v2.pkl"
+    MODEL_PATH = BASE_DIR / "model" / "model_terbaru_v2.pkl"
 
     try:
         # Initialize model service with Supabase URL and local fallback
@@ -142,3 +145,27 @@ app.include_router(users.router)
 app.include_router(auth_router)
 
 logger.info("[ROUTES] All routers registered successfully")
+
+def get_waste_category(waste_type: str) -> dict:
+    """
+    Get waste category and tips for a given waste type
+    
+    Args:
+        waste_type: The waste type string
+        
+    Returns:
+        dict: Contains category and tips
+    """
+    # Normalize input
+    normalized_type = waste_type.strip()
+    
+    # Get category from mapping
+    category = CATEGORY_MAPPING.get(normalized_type, normalized_type)
+    
+    # Get tips for this category
+    tips = WASTE_TIPS.get(category, [])
+    
+    return {
+        "category": category,
+        "tips": tips
+    }
