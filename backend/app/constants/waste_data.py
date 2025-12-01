@@ -49,28 +49,6 @@ WASTE_TIPS: Dict[str, List[Dict[str, str]]] = {
             "title": "Setorkan ke bank sampah terdekat",
             "color": "#10B981"
         }
-    ],
-    "Sampah B3": [
-        {
-            "title": "Jangan buang sembarangan, berbahaya!",
-            "color": "#EF4444"
-        },
-        {
-            "title": "Simpan dalam wadah tertutup khusus",
-            "color": "#F59E0B"
-        },
-        {
-            "title": "Serahkan ke tempat pengolahan B3",
-            "color": "#8B5CF6"
-        },
-        {
-            "title": "Jauhkan dari jangkauan anak-anak",
-            "color": "#EF4444"
-        },
-        {
-            "title": "Gunakan label peringatan pada wadah",
-            "color": "#10B981"
-        }
     ]
 }
 
@@ -78,18 +56,15 @@ WASTE_TIPS: Dict[str, List[Dict[str, str]]] = {
 CLASS_MAPPING: Dict[int, str] = {
     0: "Sampah Organik",
     1: "Sampah Anorganik",
-    2: "Sampah B3"
 }
 
 # Category mapping untuk fallback
 CATEGORY_MAPPING: Dict[str, str] = {
     "Sampah Organik": "Sampah Organik",
     "Sampah Anorganik": "Sampah Anorganik",
-    "Sampah B3": "Sampah B3"
 }
 
 # Keywords untuk kategori sampah
 ORGANIC_KEYWORDS = ['organic', 'organik', 'food', 'makanan', 'leaves', 'daun']
 INORGANIC_KEYWORDS = ['plastic', 'plastik', 'bottle', 'botol', 'can', 'kaleng',
                       'paper', 'kertas', 'cardboard', 'glass', 'kaca']
-B3_KEYWORDS = ['battery', 'baterai', 'electronic', 'elektronik', 'medical', 'medis']

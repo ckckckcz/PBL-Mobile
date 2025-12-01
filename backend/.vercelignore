@@ -1,0 +1,7 @@
+venv/
+model/
+data/
+**/__pycache__/
+*.sql
+test_*.py
+*.log

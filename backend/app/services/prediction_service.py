@@ -3,7 +3,7 @@ Prediction service for waste classification
 """
 
 import numpy as np
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ WASTE_TIPS = {
     ],
     "B3": [
         {
-            "title": "Jangan buang sembarangan, berbahaya!",
+            "title": "Jangan buang sembarangan, berbahaya! ",
             "color": "#EF4444"
         },
         {
@@ -92,7 +92,7 @@ class PredictionService:
             model: Dictionary containing model components
         """
         self.model_dict = model
-        self.xgb_model = model.get('model')
+        self.xgb_model = model. get('model')
         self.scaler = model.get('scaler')
         self.label_encoder = model.get('label_encoder')
         self.waste_map = model.get('waste_map', {})
@@ -101,8 +101,80 @@ class PredictionService:
         logger.info(f"[INIT] XGBoost model: {type(self.xgb_model).__name__}")
         logger.info(f"[INIT] Scaler: {type(self.scaler).__name__}")
         logger.info(f"[INIT] Label encoder: {type(self.label_encoder).__name__}")
-        logger.info(f"[INIT] Waste map: {self.waste_map}")
+        logger. info(f"[INIT] Waste map: {self.waste_map}")
         logger.info(f"[INIT] Threshold: {self.threshold}")
+
+    def _format_probability_line(
+        self,
+        class_name: str,
+        probability: float
+    ) -> str:
+        """
+        Format single probability line to match Colab output exactly
+
+        Format: "    ClassName              :  XX.XX% -> Sampah Category"
+
+        Args:
+            class_name: Original class name from label encoder
+            probability: Probability value (0-1 scale)
+
+        Returns:
+            Formatted string line
+        """
+        # Format class name: replace underscores with spaces and title case
+        formatted_name = class_name.replace('_', ' ').title()
+
+        # Get category from waste_map
+        category = self.waste_map.get(class_name, "ANORGANIK")
+
+        # Calculate percentage
+        prob_percentage = probability * 100
+
+        # Format: padding 20 chars for name, 6 chars for percentage with 2 decimals
+        # This matches: "    Kaca                :  91.21% -> Sampah Anorganik"
+        formatted_line = (
+            f"    {formatted_name:<20}: {prob_percentage:>6.2f}% -> "
+            f"Sampah {category. title()}"
+        )
+
+        return formatted_line
+
+    def _get_formatted_probabilities_string(
+        self,
+        probabilities: np.ndarray
+    ) -> str:
+        """
+        Generate formatted probability string that matches Colab output exactly
+
+        Args:
+            probabilities: Probabilities array from model (shape: 1, n_classes)
+
+        Returns:
+            Formatted multi-line string with all class probabilities
+        """
+        lines = ["[PREDICT] ===== Class Probabilities ====="]
+
+        # Iterate through all classes in order
+        for idx, class_name in enumerate(self.label_encoder.classes_):
+            if probabilities. shape[1] > idx:
+                prob_value = float(probabilities[0][idx])
+                line = self._format_probability_line(class_name, prob_value)
+                lines.append(line)
+
+        lines.append("[PREDICT] ✓ Probabilities displayed")
+
+        return "\n".join(lines)
+
+    def _log_probabilities(self, probabilities: np.ndarray) -> None:
+        """
+        Log probabilities in Colab-matching format
+
+        Args:
+            probabilities: Probabilities array from model
+        """
+        formatted_string = self._get_formatted_probabilities_string(probabilities)
+        for line in formatted_string.split("\n"):
+            logger.info(line)
 
     def predict(self, features: np.ndarray) -> Dict[str, Any]:
         """
@@ -122,23 +194,30 @@ class PredictionService:
 
             # Scale features using MinMaxScaler
             logger.info("[PREDICT] Scaling features with MinMaxScaler...")
-            scaled_features = self.scaler.transform(features)
+            scaled_features = self.scaler. transform(features)
             logger.info(f"[PREDICT] Scaled features shape: {scaled_features.shape}")
 
             # Predict with XGBoost
-            logger.info("[PREDICT] XGBoost predicting...")
+            logger. info("[PREDICT] XGBoost predicting...")
             prediction = self.xgb_model.predict(scaled_features)
             logger.info(f"[PREDICT] Raw prediction: {prediction}")
 
             # Get probabilities
             probabilities = None
             confidence = 85.0  # Default confidence
+            formatted_probs_string = ""
 
-            if hasattr(self.xgb_model, 'predict_proba'):
+            if hasattr(self. xgb_model, 'predict_proba'):
                 probabilities = self.xgb_model.predict_proba(scaled_features)
                 confidence = float(np.max(probabilities) * 100)
-                logger.info(f"[PREDICT] Probabilities: {probabilities}")
-                logger.info(f"[PREDICT] Max confidence: {confidence}%")
+                logger.info(f"[PREDICT] Probabilities shape: {probabilities.shape}")
+                logger. info(f"[PREDICT] Max confidence: {confidence}%")
+
+                # Log detailed class probabilities in Colab format
+                self._log_probabilities(probabilities)
+
+                # Get formatted string for response
+                formatted_probs_string = self._get_formatted_probabilities_string(probabilities)
             else:
                 logger.warning("[PREDICT] Model doesn't have predict_proba, using default confidence")
 
@@ -153,14 +232,15 @@ class PredictionService:
 
             # Format waste type name (capitalize first letter of each word)
             waste_type = waste_class.replace('_', ' ').title()
-            logger.info(f"[PREDICT] Formatted waste type: {waste_type}")
+            logger. info(f"[PREDICT] Formatted waste type: {waste_type}")
 
             return {
                 "waste_class": waste_class,
                 "waste_type": waste_type,
                 "category": category,
                 "confidence": confidence,
-                "probabilities": probabilities
+                "probabilities": probabilities,
+                "formatted_probabilities": formatted_probs_string
             }
 
         except Exception as e:
@@ -185,6 +265,7 @@ class PredictionService:
         category = prediction_result["category"]
         confidence = prediction_result["confidence"]
         probabilities = prediction_result["probabilities"]
+        formatted_probabilities = prediction_result. get("formatted_probabilities", "")
 
         # Get tips for the category
         tips = WASTE_TIPS.get(category, WASTE_TIPS["ANORGANIK"])
@@ -193,18 +274,18 @@ class PredictionService:
             "success": True,
             "data": {
                 "wasteType": waste_type,
-                "category": f"Sampah {category.title()}",
+                "category": f"Sampah {category. title()}",
                 "confidence": round(confidence, 2),
                 "tips": tips,
                 "description": f"{waste_type} termasuk dalam kategori Sampah {category.title()}",
                 "modelInfo": {
-                    "confidenceSource": "XGBoost.predict_proba() - probability of predicted class",
+                    "confidenceSource": "XGBoost. predict_proba() - probability of predicted class",
                     "pipeline": {
                         "step_1": "Image → Resize to 16x16 and convert to grayscale",
                         "step_2": "Flatten and normalize to 0-1 (256 pixels)",
                         "step_3": "Extract 31 features by downsampling",
-                        "step_4": "MinMaxScaler.transform(31 features) → scaled features",
-                        "step_5": "XGBoost.predict(31 features) → class prediction",
+                        "step_4": "MinMaxScaler. transform(31 features) → scaled features",
+                        "step_5": "XGBoost. predict(31 features) → class prediction",
                         "step_6": "LabelEncoder.inverse_transform() → waste class name",
                         "step_7": "waste_map lookup → category (ORGANIK/ANORGANIK/B3)",
                         "step_8": "XGBoost.predict_proba(31 features) → confidence"
@@ -219,6 +300,7 @@ class PredictionService:
                         "threshold": self.threshold
                     },
                     "probabilitiesPerClass": self._format_probabilities(probabilities),
+                    "formattedProbabilities": formatted_probabilities
                 }
             }
         }
@@ -227,7 +309,7 @@ class PredictionService:
 
     def _format_probabilities(self, probabilities: Optional[np.ndarray]) -> Dict[str, Any]:
         """
-        Format probabilities for each class
+        Format probabilities for each class as structured data
 
         Args:
             probabilities: Probabilities array from model
@@ -240,7 +322,7 @@ class PredictionService:
 
         result = {}
 
-        for idx, class_name in enumerate(self.label_encoder.classes_):
+        for idx, class_name in enumerate(self.label_encoder. classes_):
             if probabilities.shape[1] > idx:
                 prob_value = round(float(probabilities[0][idx]) * 100, 2)
                 category = self.waste_map.get(class_name, "ANORGANIK")

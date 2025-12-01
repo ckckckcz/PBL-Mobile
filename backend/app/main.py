@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import logging
+import os
 
 # Core imports
 from .core.logger import setup_logger
@@ -64,7 +65,7 @@ async def log_requests(request: Request, call_next):
 async def startup_event():
     """
     Event handler yang dijalankan saat aplikasi startup
-    Inisialisasi database, load model, dan setup services
+    Inisialisasi database, load model dari Supabase, dan setup services
     """
     logger.info("[STARTUP] ===== Starting Pilar API =====")
 
@@ -78,13 +79,36 @@ async def startup_event():
 
     # Initialize model service and load model
     logger.info("[STARTUP] Loading machine learning model...")
+
+    # Get model URL from environment variable
+    MODEL_URL = os.getenv(
+        "MODEL_URL",
+        "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_v2.pkl"
+    )
+
+    # Local model path as fallback
     BASE_DIR = Path(__file__).resolve().parent.parent
     MODEL_PATH = BASE_DIR / "model" / "model_v2.pkl"
 
     try:
-        model_service = init_model_service(MODEL_PATH)
+        # Initialize model service with Supabase URL and local fallback
+        logger.info("[STARTUP] Initializing model service...")
+        logger.info(f"[STARTUP] Primary source: Supabase Storage")
+        logger.info(f"[STARTUP] Fallback source: Local file ({MODEL_PATH})")
+
+        model_service = init_model_service(model_path=MODEL_PATH, model_url=MODEL_URL)
+
+        # Load model (will try Supabase first, then fallback to local)
         model = model_service.load_model()
-        logger.info("[STARTUP] ✓ Model loaded successfully")
+
+        # Get model info for logging
+        model_info = model_service.get_model_info()
+        logger.info(f"[STARTUP] ✓ Model loaded successfully from: {model_info['source']}")
+        logger.info(f"[STARTUP] Model validated: {model_info['validated']}")
+        logger.info(f"[STARTUP] Waste classes: {model_info['waste_classes']}")
+        logger.info(f"[STARTUP] Number of classes: {model_info.get('n_classes', 'N/A')}")
+        logger.info(f"[STARTUP] Threshold: {model_info.get('threshold', 'N/A')}")
+        logger.info(f"[STARTUP] Waste categories: {model_info.get('waste_categories', [])}")
 
         # Initialize prediction service with loaded model
         logger.info("[STARTUP] Initializing prediction service...")
@@ -94,6 +118,8 @@ async def startup_event():
     except Exception as e:
         logger.error(f"[STARTUP] ✗ Failed to load model: {e}")
         logger.warning("[STARTUP] ⚠ API will run without prediction capability")
+        import traceback
+        logger.error(traceback.format_exc())
 
     logger.info("[STARTUP] ===== Pilar API Started Successfully =====")
 

@@ -109,6 +109,12 @@ async def predict_waste(file: UploadFile = File(... )):
             f"Confidence: {prediction_result['confidence']:.2f}%"
         )
 
+        # Log response data including probabilities
+        if 'data' in response and 'modelInfo' in response['data']:
+            probs_per_class = response['data']['modelInfo'].get('probabilitiesPerClass', {})
+            if probs_per_class:
+                logger.info(f"[PREDICT] ===== Response includes {len(probs_per_class)} class probabilities =====")
+
         return response
 
     except HTTPException:
