@@ -1,4 +1,3 @@
-// FILE: profile_page.dart
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'about_app.dart';
