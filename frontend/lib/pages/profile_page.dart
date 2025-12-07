@@ -44,8 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       PhosphorIconsStyle.regular),
                   title: 'Riwayat',
                   onTap: () {
-                    // TODO: Navigate to history page
-                    debugPrint('Navigate to Riwayat');
+                    Navigator.pushNamed(context, '/history');
                   },
                 ),
                 const SizedBox(height: 12),
