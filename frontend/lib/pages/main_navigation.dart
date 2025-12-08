@@ -3,7 +3,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'dashboard_page.dart';
 import 'scan_page.dart';
 import 'history.dart';
-import 'profile.dart';
+import 'profile_page.dart'; 
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
