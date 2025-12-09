@@ -1,9 +1,12 @@
 """
 Prediction service for waste classification
 Dioptimalkan untuk matching Colab results
+NO FAKE CONFIDENCE - Always use real probabilities from model
 """
 
+from __future__ import annotations
 import numpy as np
+import pandas as pd
 from typing import Dict, Any, Optional
 import logging
 
@@ -76,6 +79,16 @@ class PredictionService:
         self.label_encoder = model.get('label_encoder')
         self.waste_map = model.get('waste_map', {})
         self.threshold = model.get('threshold', 0.6)
+
+        # Get feature names from scaler if available
+        self.feature_names = None
+        if hasattr(self.scaler, 'feature_names_in_'):
+            self.feature_names = self.scaler.feature_names_in_
+            logger.info(f"[INIT] Scaler has {len(self.feature_names)} feature names")
+        else:
+            # Create default feature names for 38 features
+            self.feature_names = [f"feature_{i}" for i in range(38)]
+            logger.info(f"[INIT] Using default feature names (38 features)")
 
         logger.info(f"[INIT] XGBoost model: {type(self.xgb_model).__name__}")
         logger.info(f"[INIT] Scaler: {type(self.scaler).__name__}")
@@ -157,152 +170,152 @@ class PredictionService:
     def predict(self, features: np.ndarray) -> Dict[str, Any]:
         """
         Perform prediction on preprocessed image features
-        CRITICAL: Features harus sudah di-preprocess dengan image_preprocessor. py
+        CRITICAL: Features harus sudah di-preprocess dengan image_preprocessor.py
+        NO FAKE CONFIDENCE - Always uses real probabilities from model
 
         Args:
             features: Preprocessed image features (shape: 1, 38)
 
         Returns:
-            Dict containing prediction results with confidence and probabilities
+            Dict containing prediction results with REAL confidence from model
 
         Raises:
+            ValueError: If model doesn't have predict_proba (required)
             Exception: If prediction fails
         """
-        try:
-            logger.info(f"[PREDICT] Input features shape: {features.shape}, dtype: {features.dtype}")
-            logger.info(f"[PREDICT] Features range: min={features.min():.4f}, max={features.max():.4f}")
+        logger.info(f"[PREDICT] Input features shape: {features.shape}, dtype: {features.dtype}")
+        logger.info(f"[PREDICT] Features range: min={features.min():.4f}, max={features.max():.4f}")
 
-            # CRITICAL: Scale features menggunakan EXACT scaler dari model training
-            logger.info("[PREDICT] Scaling features dengan MinMaxScaler...")
+        # CRITICAL: Convert features to DataFrame with feature names for scaler
+        if self.feature_names is not None:
+            logger.info(f"[PREDICT] Converting to DataFrame with {len(self.feature_names)} feature names")
+            features_df = pd.DataFrame(features, columns=self.feature_names)
+            scaled_features = self.scaler.transform(features_df)
+        else:
+            # Fallback to numpy array if no feature names
+            logger.warning("[PREDICT] No feature names available, using raw numpy array")
             scaled_features = self.scaler.transform(features)
-            logger.info(f"[PREDICT] ✓ Scaled features shape: {scaled_features.shape}")
-            logger.info(f"[PREDICT] Scaled range: min={scaled_features.min():.4f}, max={scaled_features.max():.4f}")
 
-            # Perform XGBoost prediction
-            logger.info("[PREDICT] XGBoost predicting...")
-            prediction = self.xgb_model.predict(scaled_features)
-            logger.info(f"[PREDICT] ✓ Raw prediction (class index): {prediction}")
+        logger.info(f"[PREDICT] ✓ Scaled features shape: {scaled_features.shape}")
+        logger.info(f"[PREDICT] Scaled range: min={scaled_features.min():.4f}, max={scaled_features.max():.4f}")
 
-            # Get probabilities - VERY IMPORTANT untuk akurasi prediksi
-            probabilities = None
-            confidence = 85.0  # Default confidence
-            formatted_probs_string = ""
+        # Perform XGBoost prediction
+        logger.info("[PREDICT] XGBoost predicting...")
+        prediction = self.xgb_model.predict(scaled_features)
+        logger.info(f"[PREDICT] ✓ Raw prediction (class index): {prediction}")
 
-            if hasattr(self.xgb_model, 'predict_proba'):
-                probabilities = self.xgb_model.predict_proba(scaled_features)
-                logger.info(f"[PREDICT] ✓ Probabilities shape: {probabilities.shape}")
-                logger.info(f"[PREDICT] ✓ All probabilities: {probabilities}")
+        # Get probabilities - MANDATORY, no fake confidence allowed
+        if not hasattr(self.xgb_model, 'predict_proba'):
+            error_msg = "Model doesn't have predict_proba method - cannot provide confidence"
+            logger.error(f"[PREDICT] ✗ {error_msg}")
+            raise ValueError(error_msg)
 
-                # Get confidence dari highest probability
-                confidence = float(np.max(probabilities) * 100)
-                logger.info(f"[PREDICT] ✓ Max confidence: {confidence:.2f}%")
+        probabilities = self.xgb_model.predict_proba(scaled_features)
+        logger.info(f"[PREDICT] ✓ Probabilities shape: {probabilities.shape}")
 
-                # Log detailed class probabilities in Colab format
-                self._log_probabilities(probabilities)
+        # Get REAL confidence from highest probability (NO FAKE CONFIDENCE)
+        confidence = float(np.max(probabilities) * 100)
+        logger.info(f"[PREDICT] ✓ Real confidence from model: {confidence:.2f}%")
 
-                # Get formatted string for response
-                formatted_probs_string = self._get_formatted_probabilities_string(probabilities)
-            else:
-                logger.warning("[PREDICT] ⚠️ Model doesn't have predict_proba, using default confidence")
+        # Log detailed class probabilities in Colab format (DEBUG ONLY - NOT IN RESPONSE)
+        self._log_probabilities(probabilities)
 
-            # Decode prediction using label encoder
-            pred_idx = int(prediction[0])
-            logger.info(f"[PREDICT] Prediction index: {pred_idx}")
+        # Decode prediction using label encoder
+        pred_idx = int(prediction[0])
+        logger.info(f"[PREDICT] Prediction index: {pred_idx}")
 
-            waste_class = self.label_encoder.inverse_transform([pred_idx])[0]
-            logger.info(f"[PREDICT] ✓ Decoded waste class: {waste_class}")
+        waste_class = self.label_encoder.inverse_transform([pred_idx])[0]
+        logger.info(f"[PREDICT] ✓ Decoded waste class: {waste_class}")
 
-            # Map to category using waste_map
-            category = self.waste_map.get(waste_class, "ANORGANIK")
-            logger.info(f"[PREDICT] Mapped category: {category}")
+        # Map to category using waste_map
+        category = self.waste_map.get(waste_class, "ANORGANIK")
+        logger.info(f"[PREDICT] Mapped category: {category}")
 
-            # Remap B3 dan unknown ke ANORGANIK
-            if category.upper() in ["B3", "UNKNOWN"]:
-                logger.info(f"[PREDICT] ⚠️ Category {category} → Remapped to ANORGANIK")
-                category = "ANORGANIK"
+        # Remap B3 dan unknown ke ANORGANIK
+        if category.upper() in ["B3", "UNKNOWN"]:
+            logger.info(f"[PREDICT] ⚠️ Category {category} → Remapped to ANORGANIK")
+            category = "ANORGANIK"
 
-            logger.info(f"[PREDICT] ✓ Final category: {category}")
+        logger.info(f"[PREDICT] ✓ Final category: {category}")
 
-            # Format waste type name
-            waste_type = waste_class.replace('_', ' ').title()
-            logger.info(f"[PREDICT] ✓ Formatted waste type: {waste_type}")
+        # Format waste type name
+        waste_type = waste_class.replace('_', ' ').title()
+        logger.info(f"[PREDICT] ✓ Formatted waste type: {waste_type}")
 
-            return {
-                "waste_class": waste_class,
-                "waste_type": waste_type,
-                "category": category,
-                "confidence": confidence,
-                "probabilities": probabilities,
-                "formatted_probabilities": formatted_probs_string
-            }
-
-        except Exception as e:
-            logger.error(f"[PREDICT] ✗ Error during prediction: {e}")
-            logger.exception(e)
-            raise
+        return {
+            "waste_class": waste_class,
+            "waste_type": waste_type,
+            "category": category,
+            "confidence": confidence,  # REAL confidence from model, not fake
+            "probabilities": probabilities  # For internal use only, not sent to mobile
+        }
 
     def format_response(
         self,
-        prediction_result: Dict[str, Any]
+        prediction_result: Dict[str, Any],
+        include_debug_info: bool = False
     ) -> Dict[str, Any]:
         """
-        Format prediction results into API response structure
+        Format prediction results into lean API response for mobile
+        NO modelInfo in production response - keep it lean for mobile apps
 
         Args:
             prediction_result: Prediction result from predict()
+            include_debug_info: If True, include detailed model info (for debugging only)
 
         Returns:
-            Formatted response dictionary
+            Formatted lean response dictionary for mobile
         """
         waste_type = prediction_result["waste_type"]
         category = prediction_result["category"]
         confidence = prediction_result["confidence"]
-        probabilities = prediction_result["probabilities"]
-        formatted_probabilities = prediction_result. get("formatted_probabilities", "")
 
         # Get tips for the category
         tips = WASTE_TIPS.get(category, WASTE_TIPS["ANORGANIK"])
 
+        # Lean response for mobile (no heavy metadata)
         response = {
             "success": True,
             "data": {
                 "wasteType": waste_type,
-                "category": f"Sampah {category. title()}",
+                "category": f"Sampah {category.title()}",
                 "confidence": round(confidence, 2),
                 "tips": tips,
-                "description": f"{waste_type} termasuk dalam kategori Sampah {category.title()}",
-                "modelInfo": {
-                    "confidenceSource": "XGBoost.predict_proba() - probability of predicted class",
-                    "pipeline": {
-                        "step_1": "Image → Resize to 16x16 and convert to grayscale",
-                        "step_2": "Flatten and normalize to 0-1 (256 pixels)",
-                        "step_3": "Extract 38 features by downsampling (every 6th pixel)",
-                        "step_4": "MinMaxScaler.transform(38 features) → scaled features",
-                        "step_5": "XGBoost.predict(38 features) → class prediction",
-                        "step_6": "LabelEncoder.inverse_transform() → waste class name",
-                        "step_7": "waste_map lookup → category (ORGANIK/ANORGANIK), B3/UNKNOWN remapped to ANORGANIK",
-                        "step_8": "XGBoost.predict_proba(38 features) → confidence"
-                    },
-                    "modelComponents": {
-                        "xgb_model_type": type(self.xgb_model).__name__,
-                        "scaler_type": type(self. scaler).__name__,
-                        "label_encoder_type": type(self.label_encoder).__name__,
-                        "n_classes": len(self.label_encoder.classes_),
-                        "classes": list(self.label_encoder.classes_),
-                        "waste_map": self.waste_map,
-                        "threshold": self.threshold
-                    },
-                    "probabilitiesPerClass": self._format_probabilities(probabilities),
-                    "formattedProbabilities": formatted_probabilities
-                }
+                "description": f"{waste_type} termasuk dalam kategori Sampah {category.title()}"
             }
         }
+
+        # Include debug info only if explicitly requested (NOT for mobile/production)
+        if include_debug_info:
+            probabilities = prediction_result.get("probabilities")
+            response["data"]["modelInfo"] = {
+                "confidenceSource": "XGBoost.predict_proba() - real probability from model",
+                "pipeline": {
+                    "step_1": "Image → Resize to 16x16 and convert to grayscale",
+                    "step_2": "Flatten and normalize to 0-1 (256 pixels)",
+                    "step_3": "Extract 38 features by downsampling (every 6th pixel)",
+                    "step_4": "MinMaxScaler.transform(38 features with feature names) → scaled features",
+                    "step_5": "XGBoost.predict(scaled features) → class prediction",
+                    "step_6": "LabelEncoder.inverse_transform() → waste class name",
+                    "step_7": "waste_map lookup → category (ORGANIK/ANORGANIK)",
+                    "step_8": "XGBoost.predict_proba() → REAL confidence (no fake values)"
+                },
+                "modelComponents": {
+                    "xgb_model_type": type(self.xgb_model).__name__,
+                    "scaler_type": type(self.scaler).__name__,
+                    "label_encoder_type": type(self.label_encoder).__name__,
+                    "n_classes": len(self.label_encoder.classes_),
+                    "threshold": self.threshold
+                },
+                "probabilitiesPerClass": self._format_probabilities(probabilities) if probabilities is not None else {}
+            }
 
         return response
 
     def _format_probabilities(self, probabilities: Optional[np.ndarray]) -> Dict[str, Any]:
         """
         Format probabilities for each class as structured data
+        FOR DEBUG USE ONLY - Not sent to mobile apps
 
         Args:
             probabilities: Probabilities array from model

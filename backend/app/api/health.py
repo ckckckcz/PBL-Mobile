@@ -1,10 +1,12 @@
 """
 Health check endpoints
+All endpoints include model_loaded and model_validated status
 """
 
 from fastapi import APIRouter
 from ..models.schemas import HealthCheckResponse, RootResponse, TestResponse
 from ..services.model_service import get_model_service
+from ..core.config import APP_MODE
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,22 +18,28 @@ router = APIRouter(tags=["Health"])
 async def root():
     """
     Root endpoint - API information
+    Includes model_loaded and model_validated status
     """
     model_service = get_model_service()
     model_loaded = model_service.is_loaded() if model_service else False
+    model_validated = False
 
     # Get detailed model info
     model_info = {}
     if model_service:
         model_info = model_service.get_model_info()
+        model_validated = model_info.get("validated", False)
 
     return {
         "message": "Pilar API is ready!",
+        "app_mode": APP_MODE,
         "model_loaded": model_loaded,
+        "model_validated": model_validated,
         "model_info": {
             "loaded": model_info.get("loaded", False),
             "validated": model_info.get("validated", False),
-            "source": model_info.get("source", "unknown")
+            "source": model_info.get("source", "unknown"),
+            "n_classes": model_info.get("n_classes", 0)
         },
         "endpoints": {
             "predict": "/api/predict",
@@ -40,7 +48,7 @@ async def root():
             "model_status": "/api/model/status"
         },
         "server": "FastAPI",
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 
@@ -48,6 +56,7 @@ async def root():
 async def health_check():
     """
     Health check endpoint
+    Returns model_loaded and model_validated status
     """
     model_service = get_model_service()
     model_loaded = model_service.is_loaded() if model_service else False
@@ -58,10 +67,14 @@ async def health_check():
         model_info = model_service.get_model_info()
         model_validated = model_info.get("validated", False)
 
+    # Determine overall health status
+    status = "healthy" if (model_loaded and model_validated) else "degraded"
+
     return {
-        "status": "healthy",
+        "status": status,
         "model_loaded": model_loaded,
-        "model_validated": model_validated
+        "model_validated": model_validated,
+        "ready_for_predictions": model_loaded and model_validated
     }
 
 
@@ -69,16 +82,24 @@ async def health_check():
 async def test_endpoint():
     """
     Test endpoint untuk memastikan API dapat diakses
+    Includes model_loaded and model_validated status
     """
     logger.info("[TEST] Test endpoint called")
 
     model_service = get_model_service()
     model_loaded = model_service.is_loaded() if model_service else False
+    model_validated = False
+
+    if model_service:
+        model_info = model_service.get_model_info()
+        model_validated = model_info.get("validated", False)
 
     return {
         "success": True,
         "message": "API is working!",
+        "app_mode": APP_MODE,
         "model_loaded": model_loaded,
+        "model_validated": model_validated,
         "timestamp": "OK"
     }
 
@@ -87,7 +108,7 @@ async def test_endpoint():
 async def model_status():
     """
     Endpoint untuk mengecek status model secara detail
-    Termasuk apakah model sudah berhasil diload dari Supabase atau tidak
+    Includes complete model_loaded and model_validated status
     """
     logger.info("[MODEL STATUS] Model status check requested")
 
@@ -97,22 +118,29 @@ async def model_status():
         return {
             "success": False,
             "message": "Model service not initialized",
+            "app_mode": APP_MODE,
             "data": {
-                "loaded": False,
-                "validated": False,
+                "model_loaded": False,
+                "model_validated": False,
                 "source": None,
-                "error": "Model service not found"
+                "error": "Model service not found",
+                "ready_for_predictions": False
             }
         }
 
     model_info = model_service.get_model_info()
+    model_loaded = model_info.get("loaded", False)
+    model_validated = model_info.get("validated", False)
+    ready_for_predictions = model_loaded and model_validated
 
     return {
-        "success": model_info.get("loaded", False) and model_info.get("validated", False),
-        "message": "Model loaded and validated" if model_info.get("validated") else "Model not loaded or validation failed",
+        "success": ready_for_predictions,
+        "message": "Model loaded and validated" if model_validated else "Model not loaded or validation failed",
+        "app_mode": APP_MODE,
         "data": {
-            "loaded": model_info.get("loaded", False),
-            "validated": model_info.get("validated", False),
+            "model_loaded": model_loaded,
+            "model_validated": model_validated,
+            "ready_for_predictions": ready_for_predictions,
             "source": model_info.get("source", "unknown"),
             "components": model_info.get("components", []),
             "waste_classes": model_info.get("waste_classes", []),

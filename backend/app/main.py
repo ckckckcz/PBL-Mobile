@@ -1,28 +1,28 @@
 """
 Main application file for Pilar API
-Refactored version with clean architecture and separated concerns
+Optimized for Hugging Face deployment with APP_MODE support
+- APP_MODE: 'demo' (HF/local) or 'production' (full features)
+- Load model from local file only (backend/model/model_terbaru_v2.pkl)
+- No Supabase initialization at startup (lazy init only)
+- Sequential model loading: init_model_service() → load_model() → init_prediction_service()
+- Auth/users routes disabled in demo mode
 """
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import logging
-import os
 
 # Core imports
 from .core.logger import setup_logger
-from .core.database import init_supabase
+from .core.config import APP_MODE
 
 # Service imports
 from .services.model_service import init_model_service, get_model_service
 from .services.prediction_service import init_prediction_service
 
 # API Router imports
-from .api import health, predict, users
-from .auth import router as auth_router
-
-# Constants
-from app.constants.waste_data import WASTE_TIPS, CATEGORY_MAPPING
+from .api import health, predict
 
 # Setup logger
 logger = setup_logger(__name__)
@@ -31,33 +31,29 @@ logger = setup_logger(__name__)
 app = FastAPI(
     title="Pilar API",
     description="API untuk klasifikasi sampah menggunakan XGBoost Hybrid Model",
-    version="1.0.0"
+    version="2.0.0"
 )
 
-# CORS middleware untuk koneksi dengan React Native
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Izinkan semua origin untuk development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*", "Content-Type", "Authorization"],
+    allow_headers=["*"],
     expose_headers=["*"],
 )
 
 
-# Middleware untuk logging requests
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """
-    Middleware untuk logging setiap request dan response
+    Middleware untuk logging requests
     """
     logger.info(f"[REQUEST] {request.method} {request.url.path}")
     try:
         response = await call_next(request)
-        logger.info(
-            f"[RESPONSE] {request.method} {request.url.path} - "
-            f"Status: {response.status_code}"
-        )
+        logger.info(f"[RESPONSE] {request.method} {request.url.path} - Status: {response.status_code}")
         return response
     except Exception as e:
         logger.error(f"[ERROR] {request.method} {request.url.path} - {str(e)}")
@@ -67,105 +63,106 @@ async def log_requests(request: Request, call_next):
 @app.on_event("startup")
 async def startup_event():
     """
-    Event handler yang dijalankan saat aplikasi startup
-    Inisialisasi database, load model dari Supabase, dan setup services
+    Startup handler - Load model from local file only
+    Sequential loading: init_model_service() → load_model() → init_prediction_service()
+    NO CONDITIONAL LOGIC that breaks the flow
     """
+    logger.info("=" * 60)
     logger.info("[STARTUP] ===== Starting Pilar API =====")
+    logger.info(f"[STARTUP] APP_MODE: {APP_MODE}")
+    logger.info("=" * 60)
 
-    # Initialize Supabase client
-    logger.info("[STARTUP] Initializing Supabase client...")
-    supabase = init_supabase()
-    if supabase:
-        logger.info("[STARTUP] ✓ Supabase initialized")
-    else:
-        logger.warning("[STARTUP] ⚠ Supabase initialization failed")
-
-    # Initialize model service and load model
-    logger.info("[STARTUP] Loading machine learning model...")
-
-    # Get model URL from environment variable
-    MODEL_URL = os.getenv(
-        "MODEL_URL",
-        "https://qmvxvnojbqkvdkewvdoi.supabase.co/storage/v1/object/public/Model/model_terbaru_v2.pkl"
-    )
-
-    # Local model path as fallback
+    # Define model path - hardcoded for HF deployment
     BASE_DIR = Path(__file__).resolve().parent.parent
     MODEL_PATH = BASE_DIR / "model" / "model_terbaru_v2.pkl"
 
-    try:
-        # Initialize model service with Supabase URL and local fallback
-        logger.info("[STARTUP] Initializing model service...")
-        logger.info(f"[STARTUP] Primary source: Supabase Storage")
-        logger.info(f"[STARTUP] Fallback source: Local file ({MODEL_PATH})")
+    logger.info(f"[STARTUP] Base directory: {BASE_DIR}")
+    logger.info(f"[STARTUP] Model path: {MODEL_PATH}")
+    logger.info(f"[STARTUP] Model file exists: {MODEL_PATH.exists()}")
 
-        model_service = init_model_service(model_path=MODEL_PATH, model_url=MODEL_URL)
+    # STEP 1: Check if model file exists (fail fast if missing)
+    if not MODEL_PATH.exists():
+        error_msg = f"Model file not found at {MODEL_PATH}"
+        logger.error(f"[STARTUP] ✗ {error_msg}")
+        logger.error("[STARTUP] ⚠ Please ensure model_terbaru_v2.pkl exists in backend/model/")
+        raise FileNotFoundError(error_msg)
 
-        # Load model (will try Supabase first, then fallback to local)
-        model = model_service.load_model()
+    logger.info("[STARTUP] ✓ Model file found")
 
-        # Get model info for logging
-        model_info = model_service.get_model_info()
-        logger.info(f"[STARTUP] ✓ Model loaded successfully from: {model_info['source']}")
-        logger.info(f"[STARTUP] Model validated: {model_info['validated']}")
-        logger.info(f"[STARTUP] Waste classes: {model_info['waste_classes']}")
-        logger.info(f"[STARTUP] Number of classes: {model_info.get('n_classes', 'N/A')}")
-        logger.info(f"[STARTUP] Threshold: {model_info.get('threshold', 'N/A')}")
-        logger.info(f"[STARTUP] Waste categories: {model_info.get('waste_categories', [])}")
+    # STEP 2: Initialize model service (singleton pattern)
+    logger.info("[STARTUP] Initializing model service (singleton)...")
+    model_service = init_model_service(model_path=MODEL_PATH)
+    logger.info("[STARTUP] ✓ Model service initialized")
 
-        # Initialize prediction service with loaded model
-        logger.info("[STARTUP] Initializing prediction service...")
-        init_prediction_service(model)
-        logger.info("[STARTUP] ✓ Prediction service initialized")
+    # STEP 3: Load model from local file (will raise exception if fails)
+    logger.info("[STARTUP] Loading ML model from local file...")
+    model = model_service.load_model()
+    logger.info("[STARTUP] ✓ Model loaded successfully")
 
-    except Exception as e:
-        logger.error(f"[STARTUP] ✗ Failed to load model: {e}")
-        logger.warning("[STARTUP] ⚠ API will run without prediction capability")
-        import traceback
-        logger.error(traceback.format_exc())
+    # STEP 4: Get model info (validation already done in load_model)
+    model_info = model_service.get_model_info()
+    logger.info("[STARTUP] Model validation status:")
+    logger.info(f"  - Loaded: {model_info['loaded']}")
+    logger.info(f"  - Validated: {model_info['validated']}")
+    logger.info(f"  - Source: {model_info['source']}")
+    logger.info(f"  - Components: {model_info.get('components', [])}")
+    logger.info(f"  - Number of classes: {model_info.get('n_classes', 'N/A')}")
+    logger.info(f"  - Waste classes: {model_info.get('waste_classes', [])}")
+    logger.info(f"  - Threshold: {model_info.get('threshold', 0.6)}")
 
+    # STEP 5: Initialize prediction service (will use loaded model)
+    logger.info("[STARTUP] Initializing prediction service...")
+    init_prediction_service(model)
+    logger.info("[STARTUP] ✓ Prediction service initialized")
+
+    # STEP 6: Log mode-specific info
+    logger.info("[STARTUP] Configuration:")
+    logger.info(f"  - APP_MODE: {APP_MODE}")
+    if APP_MODE.lower() == "demo":
+        logger.info("  - Database: DISABLED (demo mode)")
+        logger.info("  - Auth routes: DISABLED (demo mode)")
+        logger.info("  - User routes: DISABLED (demo mode)")
+    else:
+        logger.info("  - Database: ENABLED (lazy init on request)")
+        logger.info("  - Auth routes: ENABLED")
+        logger.info("  - User routes: ENABLED")
+
+    logger.info("=" * 60)
     logger.info("[STARTUP] ===== Pilar API Started Successfully =====")
+    logger.info("=" * 60)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """
-    Event handler yang dijalankan saat aplikasi shutdown
-    Cleanup resources jika diperlukan
+    Shutdown handler
     """
+    logger.info("=" * 60)
     logger.info("[SHUTDOWN] ===== Shutting down Pilar API =====")
-    # Add cleanup code here if needed
     logger.info("[SHUTDOWN] ✓ Shutdown complete")
+    logger.info("=" * 60)
 
 
-# Include routers
+# Include core routers (always active)
 app.include_router(health.router)
 app.include_router(predict.router)
-app.include_router(users.router)
-app.include_router(auth_router)
 
-logger.info("[ROUTES] All routers registered successfully")
+logger.info("[ROUTES] ✓ Core routers registered (health, predict)")
 
-def get_waste_category(waste_type: str) -> dict:
-    """
-    Get waste category and tips for a given waste type
-    
-    Args:
-        waste_type: The waste type string
-        
-    Returns:
-        dict: Contains category and tips
-    """
-    # Normalize input
-    normalized_type = waste_type.strip()
-    
-    # Get category from mapping
-    category = CATEGORY_MAPPING.get(normalized_type, normalized_type)
-    
-    # Get tips for this category
-    tips = WASTE_TIPS.get(category, [])
-    
-    return {
-        "category": category,
-        "tips": tips
-    }
+# Conditionally include auth/user routers based on APP_MODE
+if APP_MODE.lower() == "production":
+    try:
+        # Import auth and user routers only in production mode
+        from .api import auth, users
+
+        app.include_router(auth.router)
+        app.include_router(users.router)
+
+        logger.info("[ROUTES] ✓ Production routers registered (auth, users)")
+    except ImportError as e:
+        logger.warning(f"[ROUTES] ⚠ Could not import production routers: {e}")
+        logger.warning("[ROUTES] ⚠ Running without auth/users endpoints")
+else:
+    logger.info("[ROUTES] ⚠ Auth/users routers DISABLED (demo mode)")
+
+logger.info(f"[ROUTES] ✓ Ready for deployment in {APP_MODE.upper()} mode")

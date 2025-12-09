@@ -1,38 +1,80 @@
 """
 Database client initialization for Supabase
+Lazy initialization - only when needed, not at startup
 """
 
-from supabase import create_client, Client
-from .config import SUPABASE_URL, SUPABASE_KEY
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 import logging
+
+if TYPE_CHECKING:
+    from supabase import Client
+
+from .config import SUPABASE_URL, SUPABASE_KEY, APP_MODE
 
 logger = logging.getLogger(__name__)
 
-# Inisialisasi Supabase client
-supabase_client: Client = None
+# Global Supabase client instance (lazy-initialized)
+_supabase_client: Optional["Client"] = None
 
-def init_supabase() -> Client:
+
+def get_supabase() -> Optional["Client"]:
     """
-    Initialize Supabase client
+    Get Supabase client instance (lazy initialization)
+    Only initializes when first called, not at startup
+
+    In demo mode, returns None and logs warning
+    In production mode, initializes Supabase client on first call
 
     Returns:
-        Client: Supabase client instance
+        Optional[Client]: Supabase client instance or None if demo mode or initialization failed
     """
-    global supabase_client
+    global _supabase_client
 
-    try:
-        supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        logger.info("[STARTUP] ✓ Supabase client initialized successfully")
-        return supabase_client
-    except Exception as e:
-        logger.error(f"[STARTUP] ✗ Failed to initialize Supabase client: {e}")
+    # Check if we're in demo mode
+    if APP_MODE.lower() == "demo":
+        if _supabase_client is None:
+            logger.warning("[DATABASE] Running in DEMO mode - Supabase not initialized")
         return None
 
-def get_supabase() -> Client:
+    # If already initialized, return cached instance
+    if _supabase_client is not None:
+        return _supabase_client
+
+    # Lazy initialization for production mode
+    try:
+        if not SUPABASE_URL or not SUPABASE_KEY:
+            logger.error("[DATABASE] Supabase credentials not found in environment variables")
+            return None
+
+        logger.info("[DATABASE] Initializing Supabase client (lazy init)...")
+        from supabase import create_client
+        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        logger.info("[DATABASE] ✓ Supabase client initialized successfully")
+        return _supabase_client
+
+    except ImportError as e:
+        logger.error(f"[DATABASE] ✗ Supabase library not installed: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"[DATABASE] ✗ Failed to initialize Supabase client: {e}")
+        return None
+
+
+def is_supabase_available() -> bool:
     """
-    Get Supabase client instance
+    Check if Supabase is available
 
     Returns:
-        Client: Supabase client instance
+        bool: True if Supabase client is initialized and available
     """
-    return supabase_client
+    return _supabase_client is not None
+
+
+def reset_supabase():
+    """
+    Reset Supabase client (useful for testing)
+    """
+    global _supabase_client
+    _supabase_client = None
+    logger.info("[DATABASE] Supabase client reset")
