@@ -122,6 +122,16 @@ class AppStrings {
       'Izin storage diperlukan untuk mengakses galeri';
   static const String errorPhotoPermission =
       'Izin akses foto diperlukan untuk mengakses galeri';
+  static const String permissionDeniedPermanently =
+      'Izin ditolak permanen. Buka Settings untuk mengubah.';
+  static const String permissionRequired = 'Izin Diperlukan';
+  static const String permissionPhotoMessage =
+      'Izin akses foto diperlukan untuk memilih gambar dari galeri. Silakan buka Settings dan berikan izin akses foto.';
+  static const String permissionStorageMessage =
+      'Izin akses storage diperlukan untuk memilih gambar dari galeri. Silakan buka Settings dan berikan izin akses storage.';
+  static const String openSettings = 'Buka Settings';
+  static const String permissionGalleryRequired =
+      'Izin akses galeri diperlukan';
   static const String cameraNotAvailable =
       'Kamera tidak tersedia. Silakan gunakan galeri.';
   static const String cameraNotReady = 'Kamera belum siap';

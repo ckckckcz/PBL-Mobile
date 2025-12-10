@@ -7,6 +7,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/scan_history_model.dart';
 import '../services/scan_history_service.dart';
 import '../services/api_service.dart';
+import '../constants/app_strings.dart';
+import '../utils/permission_helper.dart';
 import 'scan_result.dart';
 
 class ScanPage extends StatefulWidget {
@@ -130,67 +132,52 @@ class _ScanPageState extends State<ScanPage> {
 
   Future<void> _pickImageFromGallery() async {
     try {
-      // Skip permission check on web platform
-      if (!kIsWeb) {
-        // Request photos permission for Android 13+ first
-        final photosStatus = await Permission.photos.status;
-        if (photosStatus.isDenied) {
-          final requestResult = await Permission.photos.request();
-          if (requestResult.isDenied) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Izin akses foto diperlukan untuk mengakses galeri'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            return;
-          }
-        } else if (photosStatus.isPermanentlyDenied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    'Izin foto ditolak permanen.  Buka Settings untuk mengubah. '),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
-        }
+      // Request gallery permission using helper
+      final permissionGranted =
+          await PermissionHelper.requestGalleryPermission();
 
-        // Request storage permission for Android 12 and below
-        final storageStatus = await Permission.storage.status;
-        if (storageStatus.isDenied) {
-          final requestResult = await Permission.storage.request();
-          if (requestResult.isDenied) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Izin storage diperlukan untuk mengakses galeri'),
-                  backgroundColor: Colors.orange,
+      if (!permissionGranted) {
+        // Check if permanently denied
+        final isPermanentlyDenied =
+            await PermissionHelper.isGalleryPermissionPermanentlyDenied();
+
+        if (isPermanentlyDenied && mounted) {
+          // Show dialog to open settings
+          final shouldOpenSettings = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(AppStrings.permissionRequired),
+              content: const Text(AppStrings.permissionPhotoMessage),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text(AppStrings.cancel),
                 ),
-              );
-            }
-            return;
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(AppStrings.openSettings),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldOpenSettings == true) {
+            await openAppSettings();
           }
-        } else if (storageStatus.isPermanentlyDenied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    'Izin storage ditolak permanen. Buka Settings untuk mengubah.'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
+        } else if (mounted) {
+          // Permission denied but not permanently
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(AppStrings.permissionGalleryRequired),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
         }
+        return;
       }
 
+      // Pick image from gallery
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
@@ -198,14 +185,18 @@ class _ScanPageState extends State<ScanPage> {
 
       if (image != null) {
         if (mounted) {
-          // Navigate to result with dummy data
+          // Navigate to result page
           await _navigateToResult(image.path);
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memilih gambar: $e')),
+          SnackBar(
+            content: Text('${AppStrings.errorPickImage}: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
         );
       }
     }
