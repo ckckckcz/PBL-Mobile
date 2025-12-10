@@ -14,7 +14,7 @@ class ApiService {
   // - Android Emulator: http://10.0.2.2:8000
   // - iOS Simulator: http://localhost:8000
   // - Physical Device: http://YOUR_COMPUTER_IP:8000
-  static const String baseUrl = 'http://192.168.58.137:8000';
+  static const String baseUrl = 'http://192.168.1.3:8000';
   // static const String baseUrl = 'http://192.168.1.100:8000';
 
   // Endpoints
@@ -107,10 +107,7 @@ class ApiService {
   }) async {
     try {
       final url = Uri.parse('$baseUrl$loginEndpoint');
-      final body = json.encode({
-        'email': email,
-        'password': password,
-      });
+      final body = json.encode({'email': email, 'password': password});
 
       print('[API] POST $url');
       print('[API] Body: $body');
@@ -142,17 +139,11 @@ class ApiService {
           'token': data['token'],
         };
       } else {
-        return {
-          'success': false,
-          'message': data['detail'] ?? 'Login gagal',
-        };
+        return {'success': false, 'message': data['detail'] ?? 'Login gagal'};
       }
     } catch (e) {
       print('[API] Error during login: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
@@ -210,23 +201,16 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during registration: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
   /// Forgot password
   /// Returns: {success, message}
-  Future<Map<String, dynamic>> forgotPassword({
-    required String email,
-  }) async {
+  Future<Map<String, dynamic>> forgotPassword({required String email}) async {
     try {
       final url = Uri.parse('$baseUrl$forgotPasswordEndpoint');
-      final body = json.encode({
-        'email': email,
-      });
+      final body = json.encode({'email': email});
 
       print('[API] POST $url');
       print('[API] Body: $body');
@@ -255,10 +239,7 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during forgot password: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
@@ -270,14 +251,12 @@ class ApiService {
   }) async {
     try {
       final url = Uri.parse('$baseUrl$resetPasswordEndpoint');
-      final body = json.encode({
-        'email': email,
-        'new_password': newPassword,
-      });
+      final body = json.encode({'email': email, 'new_password': newPassword});
 
       print('[API] POST $url');
       print(
-          '[API] Body: ${body.replaceAll('"new_password": "$newPassword"', '"new_password": "***"')}');
+        '[API] Body: ${body.replaceAll('"new_password": "$newPassword"', '"new_password": "***"')}',
+      );
 
       final response = await http.post(
         url,
@@ -303,10 +282,7 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during reset password: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
@@ -325,7 +301,8 @@ class ApiService {
 
       print('[API] POST $url');
       print(
-          '[API] Body: ${body.replaceAll('"current_password": "${currentPassword}"', '"current_password": "***"')}');
+        '[API] Body: ${body.replaceAll('"current_password": "${currentPassword}"', '"current_password": "***"')}',
+      );
 
       final response = await http.post(
         url,
@@ -351,10 +328,7 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during change password: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
@@ -377,10 +351,7 @@ class ApiService {
       final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': data['data'],
-        };
+        return {'success': true, 'data': data['data']};
       } else {
         return {
           'success': false,
@@ -389,10 +360,7 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error getting current user: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 
@@ -414,10 +382,7 @@ class ApiService {
       await clearToken();
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'Logout berhasil',
-        };
+        return {'success': true, 'message': 'Logout berhasil'};
       } else {
         return {
           'success': true, // Still return success since local data is cleared
@@ -428,10 +393,7 @@ class ApiService {
       print('[API] Error during logout: $e');
       // Still clear local data
       await clearToken();
-      return {
-        'success': true,
-        'message': 'Logout berhasil',
-      };
+      return {'success': true, 'message': 'Logout berhasil'};
     }
   }
 
@@ -512,10 +474,7 @@ class ApiService {
       }
     } catch (e) {
       print('[API] Error during prediction: $e');
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: $e',
-      };
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 

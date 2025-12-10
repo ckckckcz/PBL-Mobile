@@ -71,7 +71,7 @@ class PredictionData(BaseModel):
     confidence: float
     tips: List[TipItem]
     description: str
-    modelInfo: ModelInfo
+    modelInfo: Optional[ModelInfo] = None  # Optional for lean mobile responses
 
 
 class PredictionResponse(BaseModel):

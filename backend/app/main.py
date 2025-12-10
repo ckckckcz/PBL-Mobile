@@ -72,26 +72,14 @@ async def startup_event():
     logger.info(f"[STARTUP] APP_MODE: {APP_MODE}")
     logger.info("=" * 60)
 
-    # Define model path - hardcoded for HF deployment
+    # Define base directory - hardcoded for HF deployment
     BASE_DIR = Path(__file__).resolve().parent.parent
-    MODEL_PATH = BASE_DIR / "model" / "model_terbaru_v2.pkl"
 
     logger.info(f"[STARTUP] Base directory: {BASE_DIR}")
-    logger.info(f"[STARTUP] Model path: {MODEL_PATH}")
-    logger.info(f"[STARTUP] Model file exists: {MODEL_PATH.exists()}")
 
-    # STEP 1: Check if model file exists (fail fast if missing)
-    if not MODEL_PATH.exists():
-        error_msg = f"Model file not found at {MODEL_PATH}"
-        logger.error(f"[STARTUP] ✗ {error_msg}")
-        logger.error("[STARTUP] ⚠ Please ensure model_terbaru_v2.pkl exists in backend/model/")
-        raise FileNotFoundError(error_msg)
-
-    logger.info("[STARTUP] ✓ Model file found")
-
-    # STEP 2: Initialize model service (singleton pattern)
+    # STEP 1: Initialize model service (singleton pattern)
     logger.info("[STARTUP] Initializing model service (singleton)...")
-    model_service = init_model_service(model_path=MODEL_PATH)
+    model_service = init_model_service(base_dir=BASE_DIR)
     logger.info("[STARTUP] ✓ Model service initialized")
 
     # STEP 3: Load model from local file (will raise exception if fails)
@@ -102,9 +90,9 @@ async def startup_event():
     # STEP 4: Get model info (validation already done in load_model)
     model_info = model_service.get_model_info()
     logger.info("[STARTUP] Model validation status:")
-    logger.info(f"  - Loaded: {model_info['loaded']}")
-    logger.info(f"  - Validated: {model_info['validated']}")
-    logger.info(f"  - Source: {model_info['source']}")
+    logger.info(f"  - Loaded: {model_info.get('loaded', False)}")
+    logger.info(f"  - Validated: {model_info.get('validated', False)}")
+    logger.info(f"  - Source: {model_info.get('source', 'N/A')}")
     logger.info(f"  - Components: {model_info.get('components', [])}")
     logger.info(f"  - Number of classes: {model_info.get('n_classes', 'N/A')}")
     logger.info(f"  - Waste classes: {model_info.get('waste_classes', [])}")

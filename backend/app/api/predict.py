@@ -163,7 +163,7 @@ async def predict_waste(file: UploadFile = File(...)):
     - Prediction service must be initialized
 
     Args:
-        file: Image file untuk diprediksi (JPG, PNG, BMP, WebP)
+        file: Image file untuk diprediksi (JPEG/JPG, PNG, BMP, WebP, GIF)
 
     Returns:
         Lean JSON response dengan waste type, category, confidence, dan tips
@@ -184,7 +184,18 @@ async def predict_waste(file: UploadFile = File(...)):
         logger.error("[PREDICT] No content type provided")
         raise HTTPException(status_code=400, detail="File harus berupa gambar")
 
-    allowed_types = {"image/jpeg", "image/png", "image/bmp", "image/webp", "application/octet-stream"}
+    # Support various MIME types for maximum mobile compatibility
+    # image/jpg is non-standard but commonly sent by mobile devices
+    allowed_types = {
+        "image/jpeg",      # Standard JPEG
+        "image/jpg",       # Non-standard but common (mobile devices)
+        "image/png",       # PNG
+        "image/bmp",       # BMP
+        "image/webp",      # WebP
+        "image/gif",       # GIF
+        "image/x-ms-bmp",  # Windows BMP variant
+        "application/octet-stream"  # Generic binary (fallback)
+    }
     if file.content_type not in allowed_types:
         logger.error(f"[PREDICT] Invalid content type: {file.content_type}")
         raise HTTPException(

@@ -1,122 +1,249 @@
 """
 Image preprocessing service for waste classification model
-Dioptimalkan untuk match hasil preprocessing di Colab
+Feature extraction EXACTLY sama dengan training notebook
+
+38 Features breakdown:
+- HSV Histogram: 24 features (8 H + 8 S + 8 V)
+- GLCM Texture: 5 features (contrast, dissimilarity, homogeneity, energy, correlation)
+- HOG: 2 features (mean, std)
+- Edge Detection (Canny): 3 features (mean, std, edge ratio)
+- Sharpness/Blur (Laplacian): 2 features (variance, mean absolute)
+- Reflection/Highlight: 2 features (bright pixel ratio, std)
 """
 
+import cv2
 import numpy as np
+from skimage.feature import hog
+from skimage.feature import graycomatrix, graycoprops
 from PIL import Image
 import logging
-from typing import Tuple
+import io
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
 
 class ImagePreprocessor:
     """
-    Service for preprocessing images for XGBoost Hybrid model
-    Preprocessing harus EXACTLY sama dengan Colab notebook
+    Service for preprocessing images for XGBoost model
+    Extract 38 hand-crafted features EXACTLY sama dengan notebook training
     """
 
-    def __init__(self, target_size: Tuple[int, int] = (16, 16)):
+    def __init__(self, target_size=(128, 128)):
         """
         Initialize image preprocessor
 
         Args:
-            target_size: Target image size for resizing (default: 16x16 sesuai Colab)
+            target_size: Target size for feature extraction (128x128 sesuai notebook)
         """
         self.target_size = target_size
         self.n_features = 38  # Model expects exactly 38 features
+        logger.info(f"[INIT] ImagePreprocessor initialized with target_size={target_size}")
 
-    def preprocess(self, image: Image. Image) -> np.ndarray:
+    def _load_image_as_array(self, image: Union[str, bytes, Image.Image, np.ndarray]) -> np.ndarray:
         """
-        Preprocess image EXACTLY seperti di Colab notebook
-
-        Steps:
-        1. Convert to RGB
-        2. Resize to 16x16
-        3. Convert to grayscale
-        4. Flatten dan normalize to 0-1
-        5.  Extract 38 features dengan downsampling
+        Load image from various input types and convert to OpenCV BGR format
 
         Args:
-            image: PIL Image object
+            image: Can be file path, bytes, PIL Image, or numpy array
 
         Returns:
-            np.ndarray: Preprocessed image features with shape (1, 38)
+            np.ndarray: Image in BGR format (OpenCV default)
+        """
+        if isinstance(image, np.ndarray):
+            # Already numpy array
+            if len(image.shape) == 2:
+                # Grayscale, convert to BGR
+                return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            elif image.shape[2] == 3:
+                # Assume RGB from PIL, convert to BGR
+                return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            return image
+
+        if isinstance(image, Image.Image):
+            # PIL Image - convert to numpy then BGR
+            img_array = np.array(image)
+            if len(img_array.shape) == 2:
+                return cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
+            else:
+                return cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+
+        if isinstance(image, bytes):
+            # Bytes - decode to numpy array
+            nparr = np.frombuffer(image, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if img is None:
+                raise ValueError("Failed to decode image from bytes")
+            return img
+
+        if isinstance(image, str):
+            # File path
+            img = cv2.imread(image)
+            if img is None:
+                raise ValueError(f"Failed to load image from path: {image}")
+            return img
+
+        raise ValueError(f"Unsupported image type: {type(image)}")
+
+    def extract_features(self, image: Union[str, bytes, Image.Image, np.ndarray]) -> np.ndarray:
+        """
+        Extract 38 features from image EXACTLY sama dengan notebook
+
+        Feature breakdown:
+        1. HSV Histogram (24 features)
+        2. GLCM Texture (5 features)
+        3. HOG (2 features)
+        4. Edge Detection - Canny (3 features)
+        5. Sharpness/Blur - Laplacian (2 features)
+        6. Reflection/Highlight (2 features)
+
+        Args:
+            image: Image input (path, bytes, PIL Image, or numpy array)
+
+        Returns:
+            np.ndarray: Feature vector with shape (1, 38)
 
         Raises:
-            Exception: If preprocessing fails
+            Exception: If feature extraction fails
         """
         try:
-            logger.info(f"[PREPROCESS] Input image mode: {image.mode}, size: {image.size}")
+            # Load and validate image
+            img = self._load_image_as_array(image)
 
-            # Step 1: Convert ke RGB (Colab juga convert semua ke RGB)
-            if image.mode != 'RGB':
-                logger.info(f"[PREPROCESS] Converting from {image.mode} to RGB")
-                image = image.convert('RGB')
+            if img is None:
+                raise ValueError("Image could not be loaded")
 
-            # Step 2: Resize ke 16x16 (EXACT sama dengan Colab)
-            image_resized = image.resize(self.target_size, Image. Resampling.LANCZOS)
-            logger.info(f"[PREPROCESS] ✓ Resized to {self.target_size}")
+            logger.info(f"[EXTRACT] Input image shape: {img.shape}")
 
-            # Convert to numpy array
-            img_array = np.array(image_resized, dtype=np.uint8)
-            logger.info(f"[PREPROCESS] Array shape: {img_array.shape}, dtype: {img_array.dtype}")
+            # Resize to target size (128x128)
+            img = cv2.resize(img, self.target_size)
+            logger.info(f"[EXTRACT] ✓ Resized to {self.target_size}")
 
-            # Step 3: Convert RGB to Grayscale menggunakan standard formula
-            # R: 0.299, G: 0.587, B: 0.114 (ITU-R BT.601 standard)
-            if len(img_array.shape) == 3 and img_array.shape[2] == 3:
-                img_gray = (
-                    0.299 * img_array[:, :, 0]. astype(np.float32) +
-                    0.587 * img_array[:, :, 1].astype(np.float32) +
-                    0.114 * img_array[:, :, 2].astype(np.float32)
-                )
-                img_gray = img_gray. astype(np.uint8)
-                logger.info(f"[PREPROCESS] ✓ Converted to grayscale, shape: {img_gray.shape}")
-            else:
-                img_gray = img_array
-                logger.warning(f"[PREPROCESS] Image already grayscale or unexpected shape")
+            # Convert to grayscale for some features
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # Step 4: Flatten dan normalize to 0-1 range
-            img_flat = img_gray.flatten(). astype(np.float32) / 255.0
-            logger.info(f"[PREPROCESS] ✓ Flattened to {len(img_flat)} pixels, normalized to 0-1")
+            features = []
 
-            # Step 5: Extract 38 features dari 256 pixels (16x16)
-            # Method: downsampling dengan step = 6
-            # 256 pixels / 6 ≈ 42.67, ambil first 38
-            features_list = []
-            for i in range(0, len(img_flat), 6):
-                if len(features_list) < 38:
-                    features_list.append(img_flat[i])
+            # === 1. HSV Histogram (24 features) ===
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-            features_38 = np.array(features_list, dtype=np. float32)
-            logger.info(f"[PREPROCESS] Downsampled to {len(features_38)} features")
+            # H channel histogram (8 bins)
+            h_hist = cv2.calcHist([hsv], [0], None, [8], [0, 180])
+            cv2.normalize(h_hist, h_hist)
+            features.extend(h_hist.flatten())
 
-            # Pad jika kurang dari 38
-            if len(features_38) < 38:
-                features_38 = np.pad(
-                    features_38,
-                    (0, 38 - len(features_38)),
-                    mode='constant',
-                    constant_values=0
-                )
-                logger.info(f"[PREPROCESS] Padded to 38 features")
+            # S channel histogram (8 bins)
+            s_hist = cv2.calcHist([hsv], [1], None, [8], [0, 256])
+            cv2.normalize(s_hist, s_hist)
+            features.extend(s_hist.flatten())
 
-            # Reshape ke (1, 38) untuk model
-            features_38 = features_38.reshape(1, -1)
+            # V channel histogram (8 bins)
+            v_hist = cv2.calcHist([hsv], [2], None, [8], [0, 256])
+            cv2.normalize(v_hist, v_hist)
+            features.extend(v_hist.flatten())
 
-            logger.info(
-                f"[PREPROCESS] ✓ Final features shape: {features_38.shape}, "
-                f"dtype: {features_38.dtype}, "
-                f"min: {features_38.min():.4f}, max: {features_38.max():.4f}"
+            logger.info(f"[EXTRACT] ✓ HSV histogram: 24 features")
+
+            # === 2. GLCM Texture (5 features) ===
+            glcm = graycomatrix(
+                gray,
+                distances=[1],
+                angles=[0],
+                levels=256,
+                symmetric=True,
+                normed=True
             )
 
-            return features_38
+            features.append(graycoprops(glcm, 'contrast')[0, 0])
+            features.append(graycoprops(glcm, 'dissimilarity')[0, 0])
+            features.append(graycoprops(glcm, 'homogeneity')[0, 0])
+            features.append(graycoprops(glcm, 'energy')[0, 0])
+            features.append(graycoprops(glcm, 'correlation')[0, 0])
+
+            logger.info(f"[EXTRACT] ✓ GLCM texture: 5 features")
+
+            # === 3. HOG (2 features) ===
+            hog_feats, _ = hog(
+                gray,
+                orientations=9,
+                pixels_per_cell=(16, 16),
+                cells_per_block=(2, 2),
+                visualize=True,
+                block_norm='L2-Hys'
+            )
+
+            features.append(np.mean(hog_feats))
+            features.append(np.std(hog_feats))
+
+            logger.info(f"[EXTRACT] ✓ HOG: 2 features")
+
+            # === 4. Edge Detection - Canny (3 features) ===
+            edges = cv2.Canny(gray, 50, 150)
+
+            features.append(np.mean(edges))
+            features.append(np.std(edges))
+            features.append(np.sum(edges > 0) / edges.size)  # Edge ratio
+
+            logger.info(f"[EXTRACT] ✓ Canny edges: 3 features")
+
+            # === 5. Sharpness/Blur - Laplacian (2 features) ===
+            lap = cv2.Laplacian(gray, cv2.CV_64F)
+
+            features.append(np.var(lap))
+            features.append(np.mean(np.abs(lap)))
+
+            logger.info(f"[EXTRACT] ✓ Laplacian: 2 features")
+
+            # === 6. Reflection/Highlight (2 features) ===
+            _, bright_mask = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
+
+            features.append(np.sum(bright_mask > 0) / bright_mask.size)  # Bright pixel ratio
+            features.append(np.std(gray))  # Intensity std
+
+            logger.info(f"[EXTRACT] ✓ Reflection: 2 features")
+
+            # Convert to numpy array and reshape
+            features_array = np.array(features, dtype=np.float32).reshape(1, -1)
+
+            # Validate feature count
+            if features_array.shape[1] != self.n_features:
+                raise ValueError(
+                    f"Expected {self.n_features} features, got {features_array.shape[1]}"
+                )
+
+            logger.info(
+                f"[EXTRACT] ✓ Final features shape: {features_array.shape}, "
+                f"dtype: {features_array.dtype}, "
+                f"min: {features_array.min():.4f}, max: {features_array.max():.4f}"
+            )
+
+            return features_array
 
         except Exception as e:
-            logger.error(f"[PREPROCESS] ✗ Error preprocessing image: {str(e)}")
+            logger.error(f"[EXTRACT] ✗ Error extracting features: {str(e)}")
             logger.exception(e)
             raise
+
+    def preprocess(self, image: Union[str, bytes, Image.Image, np.ndarray]) -> np.ndarray:
+        """
+        Main preprocessing method - extract 38 features
+
+        Args:
+            image: Image input (path, bytes, PIL Image, or numpy array)
+
+        Returns:
+            np.ndarray: Feature vector with shape (1, 38)
+        """
+        return self.extract_features(image)
+
+    # Convenience methods
+    def preprocess_from_path(self, path: str) -> np.ndarray:
+        """Extract features from image file path"""
+        return self.preprocess(path)
+
+    def preprocess_from_bytes(self, b: bytes) -> np.ndarray:
+        """Extract features from image bytes"""
+        return self.preprocess(b)
 
 
 # Singleton instance
@@ -133,4 +260,5 @@ def get_image_preprocessor() -> ImagePreprocessor:
     global _image_preprocessor
     if _image_preprocessor is None:
         _image_preprocessor = ImagePreprocessor()
+        logger.info("[SERVICE] ✓ ImagePreprocessor singleton created")
     return _image_preprocessor
