@@ -1,5 +1,6 @@
 from xgboost import XGBClassifier
 import joblib
+import numpy as np
 from pathlib import Path
 from typing import Dict, Any, Optional
 import logging
@@ -28,6 +29,79 @@ class ModelService:
 
         logger.info("[MODEL] ModelService created")
 
+    def _safe_setattr(self, obj: Any, name: str, value: Any) -> None:
+        try:
+            setattr(obj, name, value)
+        except AttributeError:
+            obj.__dict__[name] = value
+
+    def _restore_model_metadata(self, xgb_model: XGBClassifier, artifacts: Dict[str, Any]) -> None:
+        label_encoder = artifacts.get("label_encoder")
+        classes = None
+
+
+        if label_encoder is not None and hasattr(label_encoder, "classes_"):
+
+            classes_attr = getattr(label_encoder, "classes_", None)
+
+            if classes_attr is not None and len(classes_attr) > 0:
+
+                classes = np.asarray(classes_attr, dtype=object)
+                xgb_model._le = label_encoder
+
+                xgb_model.label_encoder_ = label_encoder
+
+        if classes is None:
+
+            waste_map = artifacts.get("waste_map")
+
+            if waste_map:
+
+                classes = np.asarray(list(waste_map.keys()), dtype=object)
+
+
+
+        if classes is not None and len(classes) > 0:
+
+            self._safe_setattr(xgb_model, "n_classes_", len(classes))
+            self._safe_setattr(xgb_model, "_n_classes", len(classes))
+        elif hasattr(xgb_model, "_le") and hasattr(xgb_model._le, "classes_"):
+            classes_from_encoder = getattr(xgb_model._le, "classes_", None)
+            if classes_from_encoder is not None and len(classes_from_encoder) > 0:
+                self._safe_setattr(xgb_model, "n_classes_", len(classes_from_encoder))
+                self._safe_setattr(xgb_model, "_n_classes", len(classes_from_encoder))
+
+
+        feature_columns = artifacts.get("feature_columns")
+        if feature_columns:
+            self._safe_setattr(xgb_model, "n_features_in_", len(feature_columns))
+            self._safe_setattr(
+                xgb_model,
+                "feature_names_in_",
+                np.asarray(feature_columns, dtype=object)
+            )
+        else:
+            total_features = artifacts.get("total_features", getattr(xgb_model, "n_features_in_", 38))
+            self._safe_setattr(xgb_model, "n_features_in_", total_features)
+            existing_names = getattr(xgb_model, "feature_names_in_", None)
+            if existing_names is None or len(existing_names) != total_features:
+                self._safe_setattr(
+                    xgb_model,
+                    "feature_names_in_",
+                    np.asarray(
+                        [f"feature_{i}" for i in range(total_features)],
+                        dtype=object
+                    )
+                )
+
+
+
+
+
+
+
+
+
     def load_model(self) -> Dict[str, Any]:
         logger.info(f"[MODEL] Loading artifacts from: {self.artifacts_path}")
         logger.info(f"[MODEL] Loading XGB model from: {self.model_json_path}")
@@ -38,18 +112,32 @@ class ModelService:
         if not self.model_json_path.exists():
             raise FileNotFoundError(f"Model JSON not found: {self.model_json_path}")
 
+
         # Load artifacts
+
         artifacts = joblib.load(self.artifacts_path)
 
+
+
         # Load XGBoost model
+
         xgb_model = XGBClassifier()
+
         xgb_model.load_model(str(self.model_json_path))
 
+        self._restore_model_metadata(xgb_model, artifacts)
+        logger.info("[MODEL] ✓ Restored sklearn metadata for XGB model")
+
         # Merge artifacts + model
+
         self.model = {
+
             "model": xgb_model,
+
             **artifacts
+
         }
+
 
         logger.info(f"[MODEL] Loaded keys: {list(self.model.keys())}")
 
