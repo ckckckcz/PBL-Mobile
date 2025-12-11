@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
-import 'pages/auth/login.dart';
-import 'pages/auth/register.dart';
+import 'pages/auth/auth_page.dart';
 import 'pages/auth/forgot_password.dart';
 import 'pages/auth/change_password_step1.dart';
 import 'pages/auth/change_password_step2.dart';
@@ -35,10 +34,11 @@ class MyApp extends StatelessWidget {
       title: 'Eco Waste Detector',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/login',
+      initialRoute: '/auth',
       routes: {
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
+        '/auth': (context) => const AuthPage(initialTab: 0),
+        '/login': (context) => const AuthPage(initialTab: 0),
+        '/register': (context) => const AuthPage(initialTab: 1),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/change-password-step1': (context) => const ChangePasswordStep1Page(),
         '/change-password-step2': (context) => const ChangePasswordStep2Page(),
