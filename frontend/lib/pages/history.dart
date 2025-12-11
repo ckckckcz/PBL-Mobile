@@ -4,7 +4,7 @@ import '../constants/app_strings.dart';
 import '../models/scan_history_model.dart';
 import '../services/scan_history_service.dart';
 import '../widgets/history_widgets.dart';
-import 'scan_result.dart';
+import 'history_detail_page.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -125,13 +125,8 @@ class _HistoryPageState extends State<HistoryPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ScanResultPage(
-          imageUri: scan.imageUri,
-          wasteType: scan.wasteType,
-          category: scan.category,
-          confidence: scan.confidence,
-          description: scan.description,
-          tips: scan.tips,
+        builder: (context) => HistoryDetailPage(
+          scanHistory: scan,
         ),
       ),
     ).then((_) => _loadHistory());

@@ -65,7 +65,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
         title: const Text(
-          'Tentang Aplikasi',
+          'Akun Saya',
           style: TextStyle(
             color: Color(0xFF2E3A2F),
             fontSize: 18,

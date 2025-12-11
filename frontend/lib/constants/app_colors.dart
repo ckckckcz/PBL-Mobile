@@ -14,15 +14,19 @@ class AppColors {
   static const Color background = Color(0xFFF5F9F6);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF5F5F5);
+  static const Color cardBackground = Color(0xFFFFFFFF);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF2E3A2F);
   static const Color textSecondary = Color(0xFF607D6B);
   static const Color textTertiary = Color(0xFF9E9E9E);
+  static const Color textLight = Color(0xFFBDBDBD);
 
   // Border Colors
   static const Color border = Color(0xFFE0E0E0);
   static const Color borderLight = Color(0xFFF0F0F0);
+  static const Color divider = Color(0xFFEEEEEE);
+  static const Color grey = Color(0xFFBDBDBD);
 
   // Category Colors
   static const Color categoryOrganic = Color(0xFF4CAF50);
@@ -34,9 +38,28 @@ class AppColors {
   static const Color error = Color(0xFFF44336);
   static const Color info = Color(0xFF2196F3);
 
+  // Accent Colors (untuk Tips List Widget)
+  static const Color accentBlue = Color(0xFF42A5F5);
+  static const Color accentTeal = Color(0xFF26A69A);
+  static const Color accentOrange = Color(0xFFFF7043);
+  static const Color accentYellow = Color(0xFFFFCA28);
+
   // Overlay Colors
   static const Color overlay = Color(0x80000000);
   static const Color overlayLight = Color(0x40000000);
+
+  // Gradients
+  static const LinearGradient backgroundGradient = LinearGradient(
+    colors: [Color(0xFFF5F9F6), Color(0xFFFFFFFF)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [Color(0xFF2E7D32), Color(0xFF43A047)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   // Utility method to parse hex color
   static Color fromHex(String hexString) {

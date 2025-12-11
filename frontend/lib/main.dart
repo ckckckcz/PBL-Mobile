@@ -9,6 +9,7 @@ import 'pages/main_navigation.dart';
 import 'pages/scan_page.dart';
 import 'pages/scan_result.dart';
 import 'pages/about_app.dart';
+import 'pages/history.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const MainNavigation(initialIndex: 3),
         '/about_app': (context) => const AboutAppPage(),
         '/scan_result': (context) => const ScanResultPage(),
+        '/history': (context) => const HistoryPage(),
       },
     );
   }

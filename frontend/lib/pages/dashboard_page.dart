@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../theme/app_theme.dart';
+import '../constants/app_colors.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/eco_tips_carousel.dart';
+import '../widgets/tips_list_widget.dart';
 import '../models/article_model.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -16,150 +17,90 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final List<Article> articles = Article.getSampleArticles();
 
-  // Data statistik dummy
-  final int wasteDetected = 127;
-  final int organicWaste = 78;
-  final int inorganicWaste = 49;
+  // Data statistik
+  final int totalScans = 458;
+  final int organicWaste = 258;
+  final int inorganicWaste = 200;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: Icon(PhosphorIcons.bell(PhosphorIconsStyle.regular)),
-            onPressed: () {
-              _showNotificationBottomSheet(context);
-            },
-          ),
-          IconButton(
-            icon: Icon(PhosphorIcons.gear(PhosphorIconsStyle.regular)),
-            onPressed: () {
-              _showSettingsBottomSheet(context);
-            },
-          ),
-        ],
-      ),
-      body: GradientBackground(
-        child: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await Future.delayed(const Duration(seconds: 1));
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Data berhasil diperbarui'),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-              }
-            },
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Welcome Card
-                  _buildWelcomeCard()
+    return RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(const Duration(seconds: 1));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Data berhasil diperbarui'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            }
+          },
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with profile
+                _buildHeader()
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.2, end: 0),
+
+                const SizedBox(height: 20),
+
+                // Total Pemindaian Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildTotalScansCard()
                       .animate()
-                      .fadeIn(duration: 400.ms)
+                      .fadeIn(delay: 100.ms, duration: 400.ms)
                       .slideY(begin: 0.2, end: 0),
+                ),
 
-                  const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                  // Stats Section
-                  _buildStatsSection()
+                // Stats Row (Organik & Anorganik)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildStatsRow()
                       .animate()
                       .fadeIn(delay: 200.ms, duration: 400.ms)
                       .slideY(begin: 0.2, end: 0),
+                ),
 
-                  const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-                  // Quick Actions
-                  _buildQuickActions()
-                      .animate()
-                      .fadeIn(delay: 300.ms, duration: 400.ms)
-                      .slideY(begin: 0.2, end: 0),
-
-                  const SizedBox(height: 24),
-
-                  // Eco Tips Carousel
-                  Text(
-                    'Tips Ramah Lingkungan 🌿',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ).animate().fadeIn(delay: 400.ms),
-
-                  const SizedBox(height: 12),
-
-                  const EcoTipsCarousel().animate().fadeIn(
-                        delay: 500.ms,
-                        duration: 400.ms,
-                      ),
-
-                  const SizedBox(height: 24),
-
-                  // Articles Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Tips Mengelola Sampah
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Edukasi Lingkungan 📚',
+                        'Tips Mengelola Sampah',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          _showAllArticlesBottomSheet(context);
-                        },
-                        child: const Text('Lihat Semua'),
-                      ),
+                      const SizedBox(height: 12),
+                      const TipsListWidget(),
                     ],
-                  ).animate().fadeIn(delay: 600.ms),
+                  ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
+                ),
 
-                  const SizedBox(height: 12),
-
-                  // Articles List (showing first 3)
-                  ...articles.take(3).map((article) {
-                    return ArticleCard(
-                      title: article.title,
-                      description: article.description,
-                      emoji: article.iconEmoji,
-                      onTap: () {
-                        _showArticleDetailBottomSheet(context, article);
-                      },
-                    );
-                  }),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
+                const SizedBox(height: 100),
+              ],
             ),
           ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/scan'),
-        backgroundColor: AppColors.primary,
-        icon: Icon(PhosphorIcons.camera(PhosphorIconsStyle.regular)),
-        label: const Text('Scan'),
-      )
-          .animate()
-          .fadeIn(delay: 800.ms, duration: 400.ms)
-          .scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1)),
-    );
+        );
   }
 
-  Widget _buildWelcomeCard() {
-    return EcoCard(
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Expanded(
@@ -167,404 +108,183 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Selamat Datang! 👋',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Kamu telah membantu mengurangi sampah sebanyak $wasteDetected item!',
+                  'Selamat Pagi,',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
                 ),
-                const SizedBox(height: 12),
-                EcoButton(
-                  text: 'Lihat Profile',
-                  onPressed: () => Navigator.pushNamed(context, '/profile'),
-                  icon: PhosphorIcons.user(PhosphorIconsStyle.regular),
+                const SizedBox(height: 4),
+                Text(
+                  'Riana Salsabila',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
           Container(
-            width: 60,
-            height: 60,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.2),
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border, width: 2),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/profile.png'),
+                fit: BoxFit.cover,
+              ),
             ),
-            child: Icon(PhosphorIcons.leaf(PhosphorIconsStyle.regular),
-                size: 30, color: AppColors.primary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Statistik Kamu 📊',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+  Widget _buildTotalScansCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2E7D32), Color(0xFF43A047)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                title: 'Total Scan',
-                value: '$wasteDetected',
-                icon: PhosphorIcons.camera(PhosphorIconsStyle.regular),
-                iconColor: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: StatCard(
-                title: 'Organik',
-                value: '$organicWaste',
-                icon: PhosphorIcons.plant(PhosphorIconsStyle.regular),
-                iconColor: AppColors.success,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        StatCard(
-          title: 'Anorganik',
-          value: '$inorganicWaste',
-          icon: PhosphorIcons.recycle(PhosphorIconsStyle.regular),
-          iconColor: AppColors.accentBlue,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Aksi Cepat ⚡',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionButton(
-                icon: PhosphorIcons.camera(PhosphorIconsStyle.regular),
-                label: 'Scan',
-                color: AppColors.primary,
-                onTap: () => Navigator.pushNamed(context, '/scan'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionButton(
-                icon: PhosphorIcons.clockCounterClockwise(PhosphorIconsStyle.regular),
-                label: 'Riwayat',
-                color: AppColors.accentBlue,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fitur riwayat segera hadir'),
-                      backgroundColor: AppColors.info,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return EcoCard(
-      onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Total Pemindaian',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            '$totalScans',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Pemindaian',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showArticleDetailBottomSheet(BuildContext context, Article article) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            title: 'Sampah Organik',
+            value: '$organicWaste',
+            subtitle: 'Pemindaian',
+            color: const Color(0xFF66BB6A),
+          ),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.grey,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Text(
-                        article.iconEmoji,
-                        style: const TextStyle(fontSize: 60),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      article.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      article.description,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            height: 1.6,
-                            color: AppColors.textSecondary,
-                          ),
-                    ),
-                    const SizedBox(height: 24),
-                    EcoCard(
-                      color: AppColors.primaryLight.withOpacity(0.1),
-                      child: Row(
-                        children: [
-                          Icon(
-                            PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Setiap tindakan kecil yang kamu lakukan memiliki dampak besar untuk bumi kita! 🌍',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            title: 'Sampah Anorganik',
+            value: '$inorganicWaste',
+            subtitle: 'Pemindaian',
+            color: const Color(0xFF42A5F5),
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  void _showAllArticlesBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.grey,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                'Semua Artikel Edukasi',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: articles.length,
-                itemBuilder: (context, index) {
-                  final article = articles[index];
-                  return ArticleCard(
-                    title: article.title,
-                    description: article.description,
-                    emoji: article.iconEmoji,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showArticleDetailBottomSheet(context, article);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
-
-  void _showNotificationBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.grey,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
             ),
-            const SizedBox(height: 20),
-            Icon(
-              PhosphorIcons.bell(PhosphorIconsStyle.regular),
-              size: 60,
-              color: AppColors.primary,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: color,
+              height: 1,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Notifikasi',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Belum ada notifikasi baru',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showSettingsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.grey,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading:
-                  Icon(PhosphorIcons.user(PhosphorIconsStyle.regular), color: AppColors.primary),
-              title: const Text('Profile'),
-              trailing: Icon(PhosphorIcons.caretRight(PhosphorIconsStyle.regular), size: 16),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/profile');
-              },
-            ),
-            ListTile(
-              leading:
-                  Icon(PhosphorIcons.globe(PhosphorIconsStyle.regular), color: AppColors.primary),
-              title: const Text('Bahasa'),
-              trailing: Icon(PhosphorIcons.caretRight(PhosphorIconsStyle.regular), size: 16),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fitur pengaturan bahasa segera hadir'),
-                    backgroundColor: AppColors.info,
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading:
-                  Icon(PhosphorIcons.signOut(PhosphorIconsStyle.regular), color: AppColors.error),
-              title: const Text('Keluar'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
-
-
