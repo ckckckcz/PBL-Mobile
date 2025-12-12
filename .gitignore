@@ -1,0 +1,14 @@
+# --- File Rahasia (PENTING) ---
+env
+.env
+backend/env
+
+# --- File Sampah Python (Cache) ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- File Settingan Laptop (VS Code / Android Studio) ---
+.idea/
+.vscode/
+*.swp
