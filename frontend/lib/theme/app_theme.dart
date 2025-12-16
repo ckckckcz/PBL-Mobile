@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
+import 'app_typography.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -16,46 +17,31 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.background,
 
-      // Typography dengan Google Fonts - Inter
+      // Typography System using AppTypography
       textTheme: GoogleFonts.interTextTheme(
-        const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-          displayMedium: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-          displaySmall: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          titleLarge: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          titleMedium: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-          bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimary),
-          bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-          labelLarge: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
+        TextTheme(
+          // Display
+          displayLarge: AppTypography.display1Bold, // Display 1
+          displayMedium: AppTypography.display2Bold, // Display 2
+          displaySmall: AppTypography.display3Bold, // Display 3
+
+          // Headline (Heading 1)
+          headlineMedium: AppTypography.heading1Semibold,
+
+          // Title (Heading 2 & 3)
+          titleLarge: AppTypography.heading2Semibold,
+          titleMedium: AppTypography.heading3Medium,
+          titleSmall: AppTypography.bodyLargeSemibold, // Optional mapping
+
+          // Body
+          bodyLarge: AppTypography.bodyLargeRegular,
+          bodyMedium: AppTypography.bodyMediumRegular,
+          bodySmall: AppTypography.bodySmallRegular,
+
+          // Label (Caption)
+          labelLarge: AppTypography.captionLargeMedium,
+          labelMedium: AppTypography.captionSmallMedium,
+          labelSmall: AppTypography.captionSmallRegular,
         ),
       ),
 
