@@ -202,7 +202,7 @@ class PredictionService:
         # Perform XGBoost prediction
         logger.info("[PREDICT] XGBoost predicting...")
         prediction = self.xgb_model.predict(scaled_features)
-        logger.info(f"[PREDICT] ✓ Raw prediction (class index): {prediction}")
+        logger.info(f"[PREDICT] ✓ Raw prediction: {prediction}")
 
         # Get probabilities - MANDATORY, no fake confidence allowed
         if not hasattr(self.xgb_model, 'predict_proba'):
@@ -220,8 +220,24 @@ class PredictionService:
         # Log detailed class probabilities in Colab format (DEBUG ONLY - NOT IN RESPONSE)
         self._log_probabilities(probabilities)
 
-        # Decode prediction using label encoder
-        pred_idx = int(prediction[0])
+        # Decode prediction using label encoder, supporting string labels
+        raw_pred = prediction[0]
+        logger.info(f"[PREDICT] Raw prediction value: {raw_pred}")
+
+        if isinstance(raw_pred, (np.integer, int, np.int32, np.int64)):
+            pred_idx = int(raw_pred)
+        else:
+            waste_class_candidate = str(raw_pred)
+            logger.info(f"[PREDICT] Treating raw prediction as class label: {waste_class_candidate}")
+            try:
+                pred_idx = int(self.label_encoder.transform([waste_class_candidate])[0])
+            except ValueError:
+                classes = list(self.label_encoder.classes_)
+                if waste_class_candidate in classes:
+                    pred_idx = classes.index(waste_class_candidate)
+                else:
+                    logger.warning("[PREDICT] Raw prediction not found in label encoder classes, using max probability index")
+                    pred_idx = int(np.argmax(probabilities[0]))
         logger.info(f"[PREDICT] Prediction index: {pred_idx}")
 
         waste_class = self.label_encoder.inverse_transform([pred_idx])[0]
