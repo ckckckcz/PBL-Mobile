@@ -20,28 +20,43 @@ class AppColors {
     950: Color(0xFF082b27),
   };
 
+  // Neutral Palette
+  static const Map<int, Color> neutral = {
+    50: Color(0xFFfafafa),
+    100: Color(0xFFededed),
+    200: Color(0xFFdfdfdf),
+    300: Color(0xFFc8c8c8),
+    400: Color(0xFFadadad),
+    500: Color(0xFFa1a1a1),
+    600: Color(0xFF888888),
+    700: Color(0xFF7b7b7b),
+    800: Color(0xFF676767),
+    900: Color(0xFF545454),
+    950: Color(0xFF363636),
+  };
+
   // Primary Colors (Puerto Rico 400 is the new primary)
   static const Color primary = Color(0xFF43c4a8);
   static const Color primaryLight = Color(0xFF6ddbc0); // 300
   static const Color primaryDark = Color(0xFF25a78d); // 500
 
   // Background Colors - Adjusted to match palette (50)
-  static const Color background = Color(0xFFf1fcf8);
+  static const Color background = Color(0xFFFFFFFF); // Clean white background
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFd1f6eb); // 100
+  static const Color surfaceVariant = Color(0xFFf7f7f7); // Neutral 50
   static const Color cardBackground = Color(0xFFFFFFFF);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF082b27); // 950
-  static const Color textSecondary = Color(0xFF1a6b5e); // 700
-  static const Color textTertiary = Color(0xFF19564c); // 800
-  static const Color textLight = Color(0xFF9E9E9E); // Keep grey for disabled
+  static const Color textPrimary = Color(0xFF363636); // Neutral 950
+  static const Color textSecondary = Color(0xFF7b7b7b); // Neutral 700
+  static const Color textTertiary = Color(0xFFa1a1a1); // Neutral 500
+  static const Color textLight = Color(0xFFadadad); // Neutral 400
 
   // Border Colors
-  static const Color border = Color(0xFFd1f6eb); // 100
-  static const Color borderLight = Color(0xFFf1fcf8); // 50
-  static const Color divider = Color(0xFFEEEEEE);
-  static const Color grey = Color(0xFFBDBDBD);
+  static const Color border = Color(0xFFdfdfdf); // Neutral 200
+  static const Color borderLight = Color(0xFFededed); // Neutral 100
+  static const Color divider = Color(0xFFededed); // Neutral 100
+  static const Color grey = Color(0xFFadadad); // Neutral 400
 
   // Category Colors
   static const Color categoryOrganic = Color(0xFF43c4a8); // Primary
