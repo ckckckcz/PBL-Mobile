@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../theme/app_theme.dart';
+import '../constants/app_colors.dart';
 
 class EcoCard extends StatelessWidget {
   final Widget child;
@@ -279,4 +279,3 @@ class LoadingOverlay extends StatelessWidget {
     );
   }
 }
-

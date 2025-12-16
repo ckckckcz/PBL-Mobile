@@ -420,7 +420,7 @@ class _LoginPageState extends State<LoginPage> {
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFF4CAF50),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(

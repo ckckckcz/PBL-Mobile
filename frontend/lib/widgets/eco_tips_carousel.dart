@@ -2,7 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import '../theme/app_theme.dart';
+import '../constants/app_colors.dart';
 import '../models/article_model.dart';
 
 class EcoTipsCarousel extends StatefulWidget {
@@ -80,17 +80,14 @@ class _EcoTipsCarouselState extends State<EcoTipsCarousel> {
           Positioned(
             right: -20,
             bottom: -20,
-            child:
-                Text(
-                      tip.emoji,
-                      style: const TextStyle(fontSize: 100),
-                      textAlign: TextAlign.center,
-                    )
-                    .animate(onPlay: (controller) => controller.repeat())
-                    .shimmer(
-                      duration: 2000.ms,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
+            child: Text(
+              tip.emoji,
+              style: const TextStyle(fontSize: 100),
+              textAlign: TextAlign.center,
+            ).animate(onPlay: (controller) => controller.repeat()).shimmer(
+                  duration: 2000.ms,
+                  color: Colors.white.withOpacity(0.3),
+                ),
           ),
           Flexible(
             child: Padding(
