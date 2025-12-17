@@ -12,8 +12,6 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  bool _showText = false;
-
   @override
   void initState() {
     super.initState();
@@ -21,19 +19,8 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _startSplashSequence() async {
-    // Step 1: Tampilkan logo saja selama 1.5 detik
-    await Future.delayed(const Duration(milliseconds: 1500));
-    
-    // Step 2: Tampilkan text "PILAR"
-    if (mounted) {
-      setState(() {
-        _showText = true;
-      });
-    }
-    
-    // Step 3: Tunggu 1.5 detik lagi, lalu navigasi ke onboarding
-    await Future.delayed(const Duration(milliseconds: 1500));
-    
+    await Future.delayed(const Duration(milliseconds: 6000));
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -47,10 +34,39 @@ class _SplashPageState extends State<SplashPage> {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            // Logo SVG
+            // Text "ILAR"
+            // Initial: Centered, Transparent
+            // Animation: Wait 1.5s -> Fade In + Slide Right
+            Padding(
+              padding: const EdgeInsets.only(left: 0),
+              child: const Text(
+                'ILAR',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              )
+                  .animate()
+                  // Stay invisible initially
+                  .fadeIn(
+                      delay: 1500.ms, duration: 500.ms, curve: Curves.easeIn)
+                  .moveX(
+                    begin: 0,
+                    end: 45,
+                    delay: 1500.ms,
+                    duration: 1000.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
+            ),
+
+            // Logo SVG "P"
+            // Animation: Pop Up (Scale) -> Wait -> Slide Left
             SvgPicture.asset(
               'assets/images/Logo Icon Pilar.svg',
               width: 80,
@@ -61,26 +77,22 @@ class _SplashPageState extends State<SplashPage> {
               ),
             )
                 .animate()
+                // Pop Up Effect
                 .fadeIn(duration: 600.ms)
-                .scale(delay: 200.ms, duration: 400.ms),
-            
-            // Text "PILAR" - hanya muncul setelah _showText = true
-            if (_showText)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: const Text(
-                  'PILAR',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
+                .scale(
+                  begin: const Offset(0, 0), // Start from nothing
+                  end: const Offset(1, 1),
+                  duration: 800.ms,
+                  curve: Curves.elasticOut, // "Pop" effect
                 )
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: 0.2, end: 0, duration: 400.ms),
-              ),
+                // Slide Left Effect
+                .moveX(
+                  begin: 0,
+                  end: -45,
+                  delay: 1500.ms,
+                  duration: 1000.ms,
+                  curve: Curves.easeOutCubic,
+                ),
           ],
         ),
       ),
