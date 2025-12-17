@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../constants/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String userName;
@@ -48,9 +50,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -59,17 +61,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
             alignment: Alignment.center,
             child: Icon(
               PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
-              color: const Color(0xFF2E3A2F),
+              color: AppColors.textPrimary,
               size: 24,
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Akun Saya',
-          style: TextStyle(
-            color: Color(0xFF2E3A2F),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+          style: AppTypography.bodyLargeSemibold.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -131,7 +131,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.grey.shade300,
+                color: AppColors.border,
                 width: 3,
               ),
             ),
@@ -141,7 +141,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: const Color(0xFF4CAF50),
+                    color: AppColors.primary,
                     child: Icon(
                       PhosphorIcons.user(PhosphorIconsStyle.regular),
                       size: 50,
@@ -157,23 +157,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
             right: 0,
             child: GestureDetector(
               onTap: () {
-                // TODO: Implement image picker
                 debugPrint('Change profile picture');
               },
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.surfaceVariant,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     width: 3,
                   ),
                 ),
                 child: Icon(
                   PhosphorIcons.camera(PhosphorIconsStyle.regular),
                   size: 18,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -197,19 +196,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF2E3A2F),
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFFE0E0E0),
+              color: AppColors.border,
               width: 1,
             ),
           ),
@@ -218,15 +215,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
             keyboardType: keyboardType,
             readOnly: readOnly,
             onTap: onTap,
+            style: AppTypography.bodyMediumRegular.copyWith(
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 14,
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
               prefixIcon: prefixIcon != null
-                  ? Icon(prefixIcon,
-                      color: const Color(0xFF607D6B), size: 20)
+                  ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
                   : null,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
@@ -253,63 +251,61 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Nomor Telepon',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF2E3A2F),
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFFE0E0E0),
+              color: AppColors.border,
               width: 1,
             ),
           ),
           child: TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
+            style: AppTypography.bodyMediumRegular.copyWith(
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'Masukkan nomor telepon',
-              hintStyle: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 14,
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
               prefix: Container(
                 padding: const EdgeInsets.only(left: 16, right: 8),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'ID',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF2E3A2F),
+                      style: AppTypography.bodyMediumRegular.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       PhosphorIcons.caretDown(PhosphorIconsStyle.fill),
                       size: 12,
-                      color: const Color(0xFF607D6B),
+                      color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Container(
                       width: 1,
                       height: 20,
-                      color: const Color(0xFFE0E0E0),
+                      color: AppColors.border,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       '+62 ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF2E3A2F),
+                      style: AppTypography.bodyMediumRegular.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -336,7 +332,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildSaveButton() {
     return SizedBox(
       width: double.infinity,
-      height: 50,
+      height: 48,
       child: ElevatedButton(
         onPressed: () {
           if (_formKey.currentState!.validate()) {
@@ -344,17 +340,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4CAF50),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
           elevation: 0,
         ),
-        child: const Text(
+        child: Text(
           'Simpan',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+          style: AppTypography.bodyMediumSemibold.copyWith(
             color: Colors.white,
           ),
         ),
@@ -371,8 +366,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF4CAF50),
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -388,23 +386,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _saveProfile() {
-    // TODO: Implement save profile logic with API
     debugPrint('Saving profile...');
     debugPrint('Name: ${_nameController.text}');
     debugPrint('Email: ${_emailController.text}');
     debugPrint('Birth Date: ${_birthDateController.text}');
     debugPrint('Phone: +62 ${_phoneController.text}');
 
-    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profil berhasil diperbarui'),
-        backgroundColor: Color(0xFF4CAF50),
+      SnackBar(
+        content: Text(
+          'Profil berhasil diperbarui',
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );
 
-    // Go back to profile page
     Navigator.pop(context);
   }
 }
