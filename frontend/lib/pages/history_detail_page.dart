@@ -1,7 +1,9 @@
-// FILE: history_detail_page.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../constants/app_colors.dart';
+import '../theme/app_typography.dart';
 import '../models/scan_history_model.dart';
 
 class HistoryDetailPage extends StatelessWidget {
@@ -27,12 +29,10 @@ class HistoryDetailPage extends StatelessWidget {
             size: 24,
           ),
         ),
-        title: const Text(
-          'Detail',
-          style: TextStyle(
+        title: Text(
+          'Hasil Pemindaian',
+          style: AppTypography.bodyLargeSemibold.copyWith(
             color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
@@ -61,19 +61,13 @@ class HistoryDetailPage extends StatelessWidget {
   Widget _buildImage() {
     return Container(
       width: double.infinity,
-      height: 200,
+      height: 360,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
+        color: AppColors.neutral[50],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         child: _buildImageWidget(),
       ),
     );
@@ -121,64 +115,67 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildWasteInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Jenis Sampah',
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9E9E9E),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Jenis Sampah',
+            style: AppTypography.bodySmallRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
                 scanHistory.wasteType,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+                style: AppTypography.bodyLargeBold.copyWith(
                   color: Colors.black,
                 ),
               ),
-            ),
-            _buildCategoryBadge(),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Dipindai: ${_formatDate(scanHistory.scanDate)}',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9E9E9E),
+              _buildCategoryBadge(),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            'Dipindai: ${scanHistory.formattedDate}',
+            style: AppTypography.bodySmallRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCategoryBadge() {
-    final isOrganic = scanHistory.category.toLowerCase() == 'organik';
-    final color = isOrganic ? const Color(0xFFFF9800) : const Color(0xFF2196F3);
+    final isOrganic = scanHistory.category.toLowerCase().contains('organik') &&
+        !scanHistory.category.toLowerCase().contains('anorganik');
+    // Colors based on screenshots
+    final color = isOrganic
+        ? const Color(0xFF4CAF50)
+        : const Color(0xFFFF9800); // Correct orange for inorganic text
     final bgColor = isOrganic
-        ? const Color(0xFFFFF3E0)
-        : const Color(0xFFE3F2FD);
+        ? const Color(0xFFE8F5E9)
+        : const Color(0xFFFFF8E1); // Correct light yellow for inorganic bg
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(100),
       ),
       child: Text(
         scanHistory.category,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+        style: AppTypography.bodySmallSemibold.copyWith(
           color: color,
         ),
       ),
@@ -189,15 +186,13 @@ class HistoryDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Tips Mengolah',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+          style: AppTypography.heading3Semibold.copyWith(
             color: Colors.black,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         ...scanHistory.tips.asMap().entries.map((entry) {
           return _buildTipItem(entry.value, entry.key);
         }).toList(),
@@ -206,34 +201,9 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildTipItem(Map<String, String> tip, int index) {
-    // Icons sesuai dengan desain gambar
-    final iconData = [
-      PhosphorIcons.trash(PhosphorIconsStyle.regular),
-      PhosphorIcons.package(PhosphorIconsStyle.regular),
-      PhosphorIcons.arrowsClockwise(PhosphorIconsStyle.regular),
-      PhosphorIcons.lightbulb(PhosphorIconsStyle.regular),
-      PhosphorIcons.storefront(PhosphorIconsStyle.regular),
-    ];
-
-    final iconColors = [
-      const Color(0xFF4CAF50),
-      const Color(0xFF2196F3),
-      const Color(0xFF00BCD4),
-      const Color(0xFFFF9800),
-      const Color(0xFF9C27B0),
-    ];
-
-    final iconBgColors = [
-      const Color(0xFFE8F5E9),
-      const Color(0xFFE3F2FD),
-      const Color(0xFFE0F7FA),
-      const Color(0xFFFFF3E0),
-      const Color(0xFFF3E5F5),
-    ];
-
-    final icon = iconData[index % iconData.length];
-    final iconColor = iconColors[index % iconColors.length];
-    final iconBgColor = iconBgColors[index % iconBgColors.length];
+    // Cycle through 1 to 5
+    final iconIndex = (index % 5) + 1;
+    final iconPath = 'assets/images/tips/id_$iconIndex.svg';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -242,28 +212,25 @@ class HistoryDetailPage extends StatelessWidget {
         children: [
           // Icon container
           Container(
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: iconBgColor,
+              color: AppColors.neutral[50], // Very light grey/white
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Center(
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
+            padding: const EdgeInsets.all(10),
+            child: SvgPicture.asset(
+              iconPath,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 12),
           // Text
           Expanded(
             child: Text(
-              tip['title'] ?? '',
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF424242),
+              tip['title'] ?? tip['text'] ?? '', // Handle both keys if possible
+              style: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -282,7 +249,7 @@ class HistoryDetailPage extends StatelessWidget {
           Navigator.of(context).popUntil((route) => route.isFirst);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF26C6DA),
+          backgroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -292,16 +259,14 @@ class HistoryDetailPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              PhosphorIcons.arrowsClockwise(PhosphorIconsStyle.regular),
+              PhosphorIcons.arrowUUpLeft(PhosphorIconsStyle.bold),
               color: Colors.white,
-              size: 18,
+              size: 20,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Pindai Ulang',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+              style: AppTypography.bodyMediumSemibold.copyWith(
                 color: Colors.white,
               ),
             ),
@@ -309,14 +274,5 @@ class HistoryDetailPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
