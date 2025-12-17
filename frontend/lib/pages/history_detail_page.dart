@@ -5,6 +5,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../models/scan_history_model.dart';
+import 'scan_page.dart'; // Added import
 
 class HistoryDetailPage extends StatelessWidget {
   final ScanHistory scanHistory;
@@ -262,7 +263,10 @@ class HistoryDetailPage extends StatelessWidget {
       height: 48,
       child: ElevatedButton(
         onPressed: () {
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ScanPage()),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
