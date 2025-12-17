@@ -4,6 +4,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../services/api_service.dart';
+import '../../theme/app_typography.dart';
+import '../../widgets/primary_button.dart';
 
 class AuthPage extends StatefulWidget {
   final int initialTab; // 0 for login, 1 for register
@@ -49,6 +51,11 @@ class _AuthPageState extends State<AuthPage>
       vsync: this,
       initialIndex: widget.initialTab,
     );
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -61,6 +68,28 @@ class _AuthPageState extends State<AuthPage>
     _registerPasswordController.dispose();
     _registerConfirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Widget _buildTitle() {
+    return Text(
+      _tabController.index == 0
+          ? 'Masuk untuk melanjutkan aktivitasmu'
+          : 'Buat akun barumu sekarang',
+      style: AppTypography.heading2Semibold.copyWith(
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildSubtitle() {
+    return Text(
+      _tabController.index == 0
+          ? 'Akses akunmu dan mulai gunakan fitur PILAR dengan mudah.'
+          : 'Daftar untuk mulai menggunakan aplikasi dan mengelola aktivitas penyortiran sampahmu.',
+      style: AppTypography.bodyMediumMedium.copyWith(
+        color: Colors.white.withOpacity(0.9),
+      ),
+    );
   }
 
   // ==================== LOGIN METHODS ====================
@@ -209,16 +238,20 @@ class _AuthPageState extends State<AuthPage>
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: _buildTabSection(),
-              ),
-            ],
-          ),
+        value: SystemUiOverlayStyle.light.copyWith(
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Column(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: _buildHeader(),
+            ),
+            Expanded(
+              child: _buildTabSection(),
+            ),
+          ],
         ),
       ),
     );
@@ -244,47 +277,26 @@ class _AuthPageState extends State<AuthPage>
     return InkWell(
       onTap: () => Navigator.pushNamedAndRemoveUntil(
         context,
-        '/home',
+        '/onboarding',
         (route) => false,
       ),
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 40,
-        height: 40,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: Colors.white.withOpacity(0.3),
-            width: 2,
+            width: 1,
           ),
         ),
         child: PhosphorIcon(
           PhosphorIconsRegular.arrowLeft,
           color: Colors.white,
-          size: 18,
+          size: 24,
         ),
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return const Text(
-      'Selamat Datang di PILAR',
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-    );
-  }
-
-  Widget _buildSubtitle() {
-    return Text(
-      'Masuk atau daftar untuk menggunakan semua fitur PILAR.',
-      style: TextStyle(
-        fontSize: 14,
-        color: Colors.white.withOpacity(0.9),
-        height: 1.4,
       ),
     );
   }
@@ -318,17 +330,17 @@ class _AuthPageState extends State<AuthPage>
   Widget _buildTabBar() {
     return Container(
       margin: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(6),
       height: 52,
       decoration: BoxDecoration(
         color: const Color(0xFFF1F1F1),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.08),
@@ -510,39 +522,11 @@ class _AuthPageState extends State<AuthPage>
   }
 
   Widget _buildLoginButton() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _isLoginLoading ? null : _handleLogin,
-          borderRadius: BorderRadius.circular(8),
-          child: Center(
-            child: _isLoginLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    'Masuk',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      text: 'Masuk',
+      onPressed: _handleLogin,
+      isLoading: _isLoginLoading,
+      margin: EdgeInsets.zero,
     );
   }
 
@@ -841,39 +825,11 @@ class _AuthPageState extends State<AuthPage>
   }
 
   Widget _buildRegisterButton() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _isRegisterLoading ? null : _handleRegister,
-          borderRadius: BorderRadius.circular(8),
-          child: Center(
-            child: _isRegisterLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    'Daftar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      text: 'Daftar',
+      onPressed: _handleRegister,
+      isLoading: _isRegisterLoading,
+      margin: EdgeInsets.zero,
     );
   }
 }

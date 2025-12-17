@@ -6,12 +6,14 @@ class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final EdgeInsetsGeometry? margin;
 
   const PrimaryButton({
     super.key,
     required this.text,
     this.onPressed,
     this.isLoading = false,
+    this.margin,
   });
 
   @override
@@ -19,7 +21,7 @@ class PrimaryButton extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 48,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
