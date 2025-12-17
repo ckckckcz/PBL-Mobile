@@ -10,6 +10,9 @@ import 'auth/change_password_step1.dart';
 import 'about_app.dart';
 import '../services/api_service.dart';
 import '../services/scan_history_service.dart';
+import '../services/profile_service.dart';
+import '../models/user_model.dart';
+import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -20,6 +23,9 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final ScanHistoryService _scanHistoryService = ScanHistoryService();
+  final ProfileService _profileService = ProfileService();
+
+  UserModel? _user;
   int _totalScans = 0;
   int _organicScans = 0;
   int _inorganicScans = 0;
@@ -27,7 +33,22 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadStats(),
+      _loadProfile(),
+    ]);
+  }
+
+  Future<void> _loadProfile() async {
+    final user = await _profileService.getProfile();
+    setState(() {
+      _user = user;
+    });
   }
 
   Future<void> _loadStats() async {
@@ -79,10 +100,13 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: AppColors.neutral[500],
                               border: Border.all(color: Colors.white, width: 2),
                             ),
+                            child: ClipOval(
+                              child: _buildAvatarImage(),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Text(
-                            'Riana Salsabila',
+                            _user?.name ?? 'Riana Salsabila',
                             style: AppTypography.bodyMediumSemibold.copyWith(
                               color: AppColors.textPrimary,
                             ),
@@ -256,14 +280,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const EditProfilePage(
-                            userName: 'Riana Salsabila',
-                            userEmail: 'riana.salsabila@example.com',
-                            userPhone: '+62 81234567890',
-                            userBirthDate: '23/05/2000',
+                          builder: (context) => EditProfilePage(
+                            userName: _user?.name ?? 'Riana Salsabila',
+                            userEmail:
+                                _user?.email ?? 'rianasalsabila@email.com',
+                            userPhone: _user?.phone ?? '81234567890',
+                            userBirthDate: _user?.birthDate ?? '23/05/2000',
                           ),
                         ),
-                      );
+                      ).then((_) {
+                        _loadProfile();
+                      });
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -434,5 +461,17 @@ class _ProfilePageState extends State<ProfilePage> {
         (route) => false,
       );
     }
+  }
+
+  Widget _buildAvatarImage() {
+    if (_user?.imagePath != null && File(_user!.imagePath!).existsSync()) {
+      return Image.file(
+        File(_user!.imagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            Container(color: AppColors.neutral[500]),
+      );
+    }
+    return Container();
   }
 }

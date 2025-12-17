@@ -7,6 +7,9 @@ import '../theme/app_typography.dart';
 import '../widgets/tips_list_widget.dart';
 import '../models/article_model.dart';
 import '../services/scan_history_service.dart';
+import '../services/profile_service.dart';
+import '../models/user_model.dart';
+import 'dart:io';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,8 +21,9 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final List<Article> articles = Article.getSampleArticles();
   final ScanHistoryService _scanHistoryService = ScanHistoryService();
+  final ProfileService _profileService = ProfileService();
 
-  // Data statistik
+  UserModel? _user;
   int _totalScans = 0;
   int _organicWaste = 0;
   int _inorganicWaste = 0;
@@ -32,11 +36,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadStats() async {
     final stats = await _scanHistoryService.getStatistics();
+    final user = await _profileService.getProfile();
     if (mounted) {
       setState(() {
         _totalScans = stats['total'] ?? 0;
         _organicWaste = stats['organik'] ?? 0;
         _inorganicWaste = stats['anorganik'] ?? 0;
+        _user = user;
       });
     }
   }
@@ -154,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Riana Salsabila',
+                  _user?.name ?? 'Riana Salsabila',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
@@ -169,14 +175,28 @@ class _DashboardPageState extends State<DashboardPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.border, width: 2),
-              image: const DecorationImage(
-                image: AssetImage('assets/images/profile.png'),
-                fit: BoxFit.cover,
-              ),
+            ),
+            child: ClipOval(
+              child: _buildProfileImage(),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    if (_user?.imagePath != null && File(_user!.imagePath!).existsSync()) {
+      return Image.file(
+        File(_user!.imagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            Image.asset('assets/images/profile.png'),
+      );
+    }
+    return Image.asset(
+      'assets/images/profile.png',
+      fit: BoxFit.cover,
     );
   }
 

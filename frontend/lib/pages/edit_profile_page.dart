@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../models/user_model.dart';
+import '../services/profile_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String userName;
@@ -28,14 +32,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _birthDateController;
   late TextEditingController _phoneController;
 
+  final ProfileService _profileService = ProfileService();
+  final ImagePicker _picker = ImagePicker();
+  String? _imagePath;
+
+  @override
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.userName);
     _emailController = TextEditingController(text: widget.userEmail);
     _birthDateController = TextEditingController(text: widget.userBirthDate);
-    _phoneController = TextEditingController(
-        text: widget.userPhone.replaceFirst('+62 ', ''));
+    _phoneController =
+        TextEditingController(text: widget.userPhone.replaceFirst('+62 ', ''));
+    _loadCurrentProfile();
+  }
+
+  Future<void> _loadCurrentProfile() async {
+    final user = await _profileService.getProfile();
+    setState(() {
+      _imagePath = user.imagePath;
+    });
   }
 
   @override
@@ -136,29 +153,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             child: ClipOval(
-              child: Image.network(
-                'https://via.placeholder.com/100',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppColors.primary,
-                    child: Icon(
-                      PhosphorIcons.user(PhosphorIconsStyle.regular),
-                      size: 50,
-                      color: Colors.white,
-                    ),
-                  );
-                },
-              ),
+              child: _buildImage(),
             ),
           ),
           Positioned(
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: () {
-                debugPrint('Change profile picture');
-              },
+              onTap: _pickImage,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -180,6 +182,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildImage() {
+    if (_imagePath != null && File(_imagePath!).existsSync()) {
+      return Image.file(
+        File(_imagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+      );
+    }
+    return _buildPlaceholder();
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppColors.primary,
+      child: Icon(
+        PhosphorIcons.user(PhosphorIconsStyle.regular),
+        size: 50,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _imagePath = image.path;
+      });
+    }
   }
 
   Widget _buildTextField({
@@ -385,26 +418,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  void _saveProfile() {
-    debugPrint('Saving profile...');
-    debugPrint('Name: ${_nameController.text}');
-    debugPrint('Email: ${_emailController.text}');
-    debugPrint('Birth Date: ${_birthDateController.text}');
-    debugPrint('Phone: +62 ${_phoneController.text}');
+  Future<void> _saveProfile() async {
+    try {
+      final user = UserModel(
+        name: _nameController.text,
+        email: _emailController.text,
+        phone: '+62 ${_phoneController.text}',
+        birthDate: _birthDateController.text,
+        imagePath: _imagePath,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Profil berhasil diperbarui',
-          style: AppTypography.bodyMediumMedium.copyWith(
-            color: Colors.white,
+      await _profileService.saveProfile(user);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Profil berhasil diperbarui',
+              style: AppTypography.bodyMediumMedium.copyWith(
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    Navigator.pop(context);
+        );
+        Navigator.pop(context, true); // Return true to signal update
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan profil'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
