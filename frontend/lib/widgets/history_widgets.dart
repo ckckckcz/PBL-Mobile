@@ -38,13 +38,12 @@ class HistoryHeader extends StatelessWidget {
           // Title centered
           const Expanded(
             child: Text(
-              AppStrings.history,
+              'Riwayat', // Changed from AppStrings.history
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-                letterSpacing: 0.5,
+                fontSize: 18, // Matches bodyLargeSemibold/bold
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
               ),
             ),
           ),
@@ -166,7 +165,7 @@ class HistoryList extends StatelessWidget {
       onRefresh: onRefresh,
       color: AppColors.primary,
       child: ListView.builder(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(vertical: 0),
         itemCount: historyList.length,
         itemBuilder: (context, index) {
           final scan = historyList[index];
@@ -193,18 +192,10 @@ class HistoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
         color: Colors.transparent,
@@ -212,7 +203,7 @@ class HistoryItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             child: Row(
               children: [
                 _buildThumbnail(),
@@ -228,12 +219,12 @@ class HistoryItem extends StatelessWidget {
 
   Widget _buildThumbnail() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 70,
-        height: 70,
-        padding: const EdgeInsets.all(14),
-        color: AppColors.surfaceVariant,
+        width: 72,
+        height: 72,
+        padding: const EdgeInsets.all(16),
+        color: AppColors.neutral[50], // Grey background for icon
         child: _buildThumbnailImage(),
       ),
     );
@@ -282,12 +273,11 @@ class HistoryItem extends StatelessWidget {
   Widget _buildContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildWasteType(),
         const SizedBox(height: 4),
-        _buildCategoryBadge(),
-        const SizedBox(height: 6),
-        _buildMetadata(),
+        _buildDateInfo(),
       ],
     );
   }
@@ -297,82 +287,22 @@ class HistoryItem extends StatelessWidget {
       scan.wasteType,
       style: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w500, // Medium
+        color: Colors.black,
       ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
   }
 
-  Widget _buildCategoryBadge() {
-    final categoryColor = AppColors.getCategoryColor(scan.category);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        scan.category,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: categoryColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetadata() {
-    return Row(
-      children: [
-        _buildDateInfo(),
-        const SizedBox(width: 12),
-        _buildConfidenceInfo(),
-      ],
-    );
-  }
-
   Widget _buildDateInfo() {
-    return Row(
-      children: [
-        Icon(
-          PhosphorIcons.calendar(PhosphorIconsStyle.regular),
-          size: 12,
-          color: AppColors.textTertiary,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          scan.formattedDate,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConfidenceInfo() {
-    return Row(
-      children: [
-        Icon(
-          PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
-          size: 12,
-          color: AppColors.success,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          '${scan.confidence.toStringAsFixed(1)}%',
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColors.success,
-          ),
-        ),
-      ],
+    return Text(
+      scan.formattedDate,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400, // Regular
+        color: AppColors.textSecondary,
+      ),
     );
   }
 }
@@ -417,4 +347,3 @@ class HistoryDialogs {
     );
   }
 }
-
