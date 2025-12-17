@@ -12,7 +12,12 @@ import '../models/user_model.dart';
 import 'dart:io';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final int dataVersion;
+
+  const DashboardPage({
+    super.key,
+    this.dataVersion = 0,
+  });
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -22,6 +27,14 @@ class _DashboardPageState extends State<DashboardPage> {
   final List<Article> articles = Article.getSampleArticles();
   final ScanHistoryService _scanHistoryService = ScanHistoryService();
   final ProfileService _profileService = ProfileService();
+
+  @override
+  void didUpdateWidget(DashboardPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.dataVersion != oldWidget.dataVersion) {
+      _loadStats();
+    }
+  }
 
   UserModel? _user;
   int _totalScans = 0;

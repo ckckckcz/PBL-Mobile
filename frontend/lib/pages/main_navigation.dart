@@ -39,7 +39,7 @@ class _MainNavigationState extends State<MainNavigation> {
   List<Widget> get _pages {
     return [
       DashboardPage(
-        key: ValueKey('dashboard_$_dataVersion'),
+        dataVersion: _dataVersion,
       ),
       const ScanPage(), // This will not be used as a page, scan opens fullscreen
       HistoryPage(
@@ -48,6 +48,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       ProfilePage(
         key: ValueKey('profile_$_dataVersion'),
+        onProfileUpdated: _refreshData,
       ),
     ];
   }

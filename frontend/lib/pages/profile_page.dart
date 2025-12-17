@@ -15,7 +15,12 @@ import '../models/user_model.dart';
 import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  final VoidCallback? onProfileUpdated;
+
+  const ProfilePage({
+    Key? key,
+    this.onProfileUpdated,
+  }) : super(key: key);
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -290,6 +295,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ).then((_) {
                         _loadProfile();
+                        widget.onProfileUpdated?.call();
                       });
                     },
                     child: Padding(
