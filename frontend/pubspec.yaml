@@ -41,6 +41,7 @@ flutter:
     - assets/lottie/
     - assets/images/
     - assets/images/history/
+    - assets/images/tips/
     # Logo untuk Splash
     - assets/images/Logo Icon Pilar.svg
     

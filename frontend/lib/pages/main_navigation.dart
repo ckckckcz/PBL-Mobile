@@ -4,7 +4,7 @@ import 'dashboard_page.dart';
 import 'scan_page.dart';
 import 'history.dart';
 import 'profile_page.dart';
-
+import '../constants/app_colors.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -113,7 +113,7 @@ class _MainNavigationState extends State<MainNavigation> {
     required int index,
   }) {
     final bool isActive = _currentIndex == index;
-    final Color activeColor = const Color(0xFF4CAF50);
+    final Color activeColor = AppColors.primary;
     final Color inactiveColor = const Color(0xFF9E9E9E);
 
     return Expanded(

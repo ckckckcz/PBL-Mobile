@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../constants/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class TipsListWidget extends StatelessWidget {
   const TipsListWidget({super.key});
@@ -9,68 +11,56 @@ class TipsListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final tips = [
       TipItem(
-        icon: PhosphorIcons.recycle(PhosphorIconsStyle.regular),
-        iconColor: const Color(0xFF66BB6A),
+        imagePath: 'assets/images/tips/id_1.svg',
         text: 'Pilah sampah untuk memudahkan daur ulang',
       ),
       TipItem(
-        icon: PhosphorIcons.shoppingCart(PhosphorIconsStyle.regular),
-        iconColor: const Color(0xFF42A5F5),
+        imagePath: 'assets/images/tips/id_2.svg',
         text: 'Ganti bungkus sampah plastik sebelum dibuang',
       ),
       TipItem(
-        icon: PhosphorIcons.package(PhosphorIconsStyle.regular),
-        iconColor: const Color(0xFF26A69A),
+        imagePath: 'assets/images/tips/id_3.svg',
         text: 'Ubah sampah organik jadi kompos',
       ),
       TipItem(
-        icon: PhosphorIcons.shoppingBag(PhosphorIconsStyle.regular),
-        iconColor: const Color(0xFFFF7043),
+        imagePath: 'assets/images/tips/id_4.svg',
         text: 'Kurangi barang sekali pakai',
       ),
       TipItem(
-        icon: PhosphorIcons.coins(PhosphorIconsStyle.regular),
-        iconColor: const Color(0xFFFFCA28),
+        imagePath: 'assets/images/tips/id_5.svg',
         text: 'Gunakan ulang wadah yang masih layak',
       ),
     ];
 
     return Column(
+      spacing: 12,
       children: tips.map((tip) => _buildTipItem(tip)).toList(),
     );
   }
 
   Widget _buildTipItem(TipItem tip) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
       child: Row(
+        spacing: 12,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: tip.iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.neutral[50],
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(
-              tip.icon,
-              color: tip.iconColor,
-              size: 20,
+            padding: const EdgeInsets.all(8),
+            child: SvgPicture.asset(
+              tip.imagePath,
+              fit: BoxFit.contain,
             ),
           ),
-          const SizedBox(width: 12),
           Expanded(
             child: Text(
               tip.text,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
+              style: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.neutral[800],
                 height: 1.4,
               ),
             ),
@@ -82,13 +72,11 @@ class TipsListWidget extends StatelessWidget {
 }
 
 class TipItem {
-  final IconData icon;
-  final Color iconColor;
+  final String imagePath;
   final String text;
 
   TipItem({
-    required this.icon,
-    required this.iconColor,
+    required this.imagePath,
     required this.text,
   });
 }
