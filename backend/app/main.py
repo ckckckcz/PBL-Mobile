@@ -1082,9 +1082,29 @@ async def log_requests(request: Request, call_next):
     timestamp = utc_timestamp()
     client_host = request.client.host if request.client else "-"
 
+    # Special logging for auth endpoints
+    if "/api/auth/" in request.url.path:
+        logger.info("=" * 80)
+        logger.info(f"[MIDDLEWARE] 🔥 AUTH REQUEST DETECTED!")
+        logger.info(f"[MIDDLEWARE] Method: {request.method}")
+        logger.info(f"[MIDDLEWARE] Path: {request.url.path}")
+        logger.info(f"[MIDDLEWARE] Full URL: {request.url}")
+        logger.info(f"[MIDDLEWARE] Client: {client_host}")
+        logger.info(f"[MIDDLEWARE] Headers: {dict(request.headers)}")
+        logger.info("=" * 80)
+
     try:
         response = await call_next(request)
         status_code = response.status_code
+
+        # Special logging for auth responses
+        if "/api/auth/" in request.url.path:
+            logger.info("=" * 80)
+            logger.info(f"[MIDDLEWARE] 🔥 AUTH RESPONSE")
+            logger.info(f"[MIDDLEWARE] Status: {status_code}")
+            logger.info(f"[MIDDLEWARE] Path: {request.url.path}")
+            logger.info("=" * 80)
+
         return response
     except Exception as exc:  # pragma: no cover - passthrough for observability
         status_code = 500
@@ -1093,6 +1113,7 @@ async def log_requests(request: Request, call_next):
             "Unhandled exception during request",
             {"path": request.url.path, "error": str(exc)},
         )
+        logger.error(f"[MIDDLEWARE] ❌ Exception in request: {exc}")
         raise
     finally:
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
@@ -1216,7 +1237,19 @@ if APP_MODE.lower() == "production":
         app.include_router(auth.router)
         app.include_router(users.router)
         append_event("INFO", "Production routers enabled", {"routes": ["auth", "users"]})
+        logger.info("=" * 80)
         logger.info("[MAIN] ✅ Production routers (auth, users) mounted successfully")
+        logger.info("[MAIN] 🔐 Auth router prefix: /api/auth")
+        logger.info("[MAIN] 👥 Users router prefix: /api")
+        logger.info("[MAIN] Available auth endpoints:")
+        logger.info("[MAIN]   - POST /api/auth/login")
+        logger.info("[MAIN]   - POST /api/auth/register")
+        logger.info("[MAIN]   - POST /api/auth/forgot-password")
+        logger.info("[MAIN]   - POST /api/auth/reset-password")
+        logger.info("[MAIN]   - POST /api/auth/change-password")
+        logger.info("[MAIN]   - GET  /api/auth/me")
+        logger.info("[MAIN]   - POST /api/auth/logout")
+        logger.info("=" * 80)
     except ImportError as exc:
         append_event(
             "WARNING",
@@ -1224,6 +1257,7 @@ if APP_MODE.lower() == "production":
             {"error": str(exc)},
         )
         logger.error(f"[MAIN] ❌ Failed to import production routers: {exc}")
+        logger.exception(exc)
 else:
     append_event("INFO", "Auth/users routers disabled (demo mode)")
     logger.info("[MAIN] ⚠️  Demo mode - auth/users routers not mounted")

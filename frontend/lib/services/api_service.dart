@@ -14,7 +14,7 @@ class ApiService {
   // - Android Emulator: http://10.0.2.2:8000
   // - iOS Simulator: http://localhost:8000
   // - Physical Device: http://YOUR_COMPUTER_IP:8000
-  static const String baseUrl ='https://ckckckcz-pilars-backend.hf.space';
+  static const String baseUrl = 'https://ckckckcz-pilars-backend.hf.space';
   // static const String baseUrl = 'http://192.168.1.100:8000';
 
   // Endpoints
@@ -109,17 +109,33 @@ class ApiService {
       final url = Uri.parse('$baseUrl$loginEndpoint');
       final body = json.encode({'email': email, 'password': password});
 
+      print('=' * 80);
+      print('[API] 🔥 SENDING LOGIN REQUEST');
       print('[API] POST $url');
+      print('[API] Headers: ${await _getHeaders()}');
       print('[API] Body: $body');
+      print('=' * 80);
 
-      final response = await http.post(
+      final response = await http
+          .post(
         url,
         headers: await _getHeaders(),
         body: body,
+      )
+          .timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception(
+              'Request timeout - server tidak merespons dalam 30 detik');
+        },
       );
 
+      print('=' * 80);
+      print('[API] 🔥 RECEIVED LOGIN RESPONSE');
       print('[API] Response status: ${response.statusCode}');
+      print('[API] Response headers: ${response.headers}');
       print('[API] Response body: ${response.body}');
+      print('=' * 80);
 
       final data = json.decode(response.body);
 
@@ -142,8 +158,16 @@ class ApiService {
         return {'success': false, 'message': data['detail'] ?? 'Login gagal'};
       }
     } catch (e) {
-      print('[API] Error during login: $e');
-      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+      print('=' * 80);
+      print('[API] ❌ ERROR DURING LOGIN');
+      print('[API] Error type: ${e.runtimeType}');
+      print('[API] Error message: $e');
+      print('=' * 80);
+      return {
+        'success': false,
+        'message':
+            'Terjadi kesalahan: $e\n\nPastikan:\n1. Server berjalan\n2. Koneksi internet lancar\n3. URL server benar'
+      };
     }
   }
 
@@ -486,7 +510,10 @@ class ApiService {
   Future<bool> testConnection() async {
     try {
       final url = Uri.parse('$baseUrl/health');
+      print('=' * 80);
+      print('[API] 🔍 TESTING CONNECTION');
       print('[API] GET $url');
+      print('=' * 80);
 
       final response = await http.get(url).timeout(
         const Duration(seconds: 5),
@@ -495,11 +522,104 @@ class ApiService {
         },
       );
 
-      print('[API] Response status: ${response.statusCode}');
+      print('=' * 80);
+      print('[API] ✅ CONNECTION TEST RESULT');
+      print('[API] Status: ${response.statusCode}');
+      print('[API] Body: ${response.body}');
+      print('=' * 80);
       return response.statusCode == 200;
     } catch (e) {
-      print('[API] Connection test failed: $e');
+      print('=' * 80);
+      print('[API] ❌ CONNECTION TEST FAILED');
+      print('[API] Error: $e');
+      print('[API] URL: $baseUrl');
+      print('=' * 80);
       return false;
     }
+  }
+
+  /// Test auth endpoint specifically
+  Future<Map<String, dynamic>> testAuthEndpoint() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/auth/test');
+      print('=' * 80);
+      print('[API] 🔍 TESTING AUTH ENDPOINT');
+      print('[API] GET $url');
+      print('=' * 80);
+
+      final response = await http.get(url).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Connection timeout');
+        },
+      );
+
+      print('=' * 80);
+      print('[API] 📥 AUTH TEST RESPONSE');
+      print('[API] Status: ${response.statusCode}');
+      print('[API] Body: ${response.body}');
+      print('=' * 80);
+
+      final data = json.decode(response.body);
+
+      return {
+        'success': response.statusCode == 200,
+        'status': response.statusCode,
+        'data': data,
+      };
+    } catch (e) {
+      print('=' * 80);
+      print('[API] ❌ AUTH TEST FAILED');
+      print('[API] Error: $e');
+      print('=' * 80);
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  /// Comprehensive connection diagnostics
+  Future<Map<String, dynamic>> runDiagnostics() async {
+    print('\n' + '🔥' * 40);
+    print('  API CONNECTION DIAGNOSTICS');
+    print('🔥' * 40 + '\n');
+    print('Base URL: $baseUrl\n');
+
+    final results = <String, dynamic>{};
+
+    // Test 1: Basic connectivity
+    print('Test 1: Basic Health Check');
+    results['health_check'] = await testConnection();
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Test 2: Auth endpoint
+    print('\nTest 2: Auth Endpoint');
+    results['auth_test'] = await testAuthEndpoint();
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Test 3: Simulated login (with invalid credentials)
+    print('\nTest 3: Login Endpoint (with test credentials)');
+    final loginResult = await login(
+      email: 'test@example.com',
+      password: 'testpass123',
+    );
+    results['login_test'] = {
+      'reachable':
+          loginResult['success'] == false && loginResult['message'] != null,
+      'response': loginResult,
+    };
+
+    print('\n' + '=' * 80);
+    print('📊 DIAGNOSTICS SUMMARY');
+    print('=' * 80);
+    print('Health Check: ${results['health_check'] ? '✅ PASS' : '❌ FAIL'}');
+    print(
+        'Auth Endpoint: ${results['auth_test']['success'] ? '✅ PASS' : '❌ FAIL'}');
+    print(
+        'Login Endpoint: ${results['login_test']['reachable'] ? '✅ PASS' : '❌ FAIL'}');
+    print('=' * 80 + '\n');
+
+    return results;
   }
 }

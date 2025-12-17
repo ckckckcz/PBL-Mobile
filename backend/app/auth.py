@@ -153,7 +153,11 @@ async def login(request: LoginRequest):
     Returns:
     - User data dan JWT token jika berhasil
     """
-    logger.info(f"[LOGIN] Login attempt for email: {request.email}")
+    logger.info("=" * 80)
+    logger.info("[LOGIN] ⚡ LOGIN REQUEST RECEIVED!")
+    logger.info(f"[LOGIN] Email: {request.email}")
+    logger.info(f"[LOGIN] Timestamp: {datetime.utcnow().isoformat()}")
+    logger.info("=" * 80)
 
     try:
         # Query user dari Supabase
@@ -167,7 +171,6 @@ async def login(request: LoginRequest):
             )
 
         user = response.data[0]
-
         # Check if user is active
         if not user.get('is_active', True):
             logger.warning(f"[LOGIN] Inactive user tried to login: {request.email}")
@@ -230,17 +233,22 @@ async def login(request: LoginRequest):
 @router.post("/register", response_model=LoginResponse)
 async def register(request: RegisterRequest):
     """
-    Register endpoint
+    Register endpoint untuk membuat user baru
 
-    - **email**: Email user (harus unique)
-    - **password**: Password user (minimal 6 karakter)
+    - **email**: Email yang valid dan belum terdaftar
+    - **password**: Password minimal 6 karakter
     - **full_name**: Nama lengkap user
     - **phone**: Nomor telepon (opsional)
 
     Returns:
     - User data dan JWT token jika berhasil
     """
-    logger.info(f"[REGISTER] Registration attempt for email: {request.email}")
+    logger.info("=" * 80)
+    logger.info("[REGISTER] ⚡ REGISTER REQUEST RECEIVED!")
+    logger.info(f"[REGISTER] Email: {request.email}")
+    logger.info(f"[REGISTER] Full Name: {request.full_name}")
+    logger.info(f"[REGISTER] Timestamp: {datetime.utcnow().isoformat()}")
+    logger.info("=" * 80)
 
     try:
         # Check if email already exists

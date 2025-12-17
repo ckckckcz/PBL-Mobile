@@ -95,9 +95,9 @@ class _LoginPageState extends State<LoginPage> {
   /// Handle login error
   void _handleLoginError(String error) {
     _showDialog(
-      title: 'Backend Belum Nyala',
+      title: 'Gagal Terhubung',
       message:
-          'Backendnya belum dinyalain, gausa login langsung pencet button atas kiri aja 👆',
+          'Tidak dapat terhubung ke server. Pastikan koneksi internet Anda lancar. Error: $error',
     );
   }
 

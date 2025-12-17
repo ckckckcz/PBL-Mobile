@@ -13,12 +13,11 @@ ENV_FILE = BACKEND_DIR / ".env"
 # Load .env file with explicit path
 load_dotenv(dotenv_path=ENV_FILE)
 
-# Log where we're looking for .env
 logger.info(f"[CONFIG] Looking for .env at: {ENV_FILE}")
 logger.info(f"[CONFIG] .env file exists: {ENV_FILE.exists()}")
 
 # Application mode: 'demo' or 'production'
-APP_MODE = os.getenv("APP_MODE", "demo")
+APP_MODE = os.getenv("APP_MODE", "production")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
