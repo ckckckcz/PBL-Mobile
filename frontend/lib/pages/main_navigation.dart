@@ -20,6 +20,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   late int _currentIndex;
+  int _dataVersion = 0; // Trigger for rebuilding pages to refresh data
 
   @override
   void initState() {
@@ -27,18 +28,34 @@ class _MainNavigationState extends State<MainNavigation> {
     _currentIndex = widget.initialIndex;
   }
 
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const ScanPage(), // This will not be used, scan opens fullscreen
-    const HistoryPage(),
-    const ProfilePage(),
-  ];
+  // Method to force refresh
+  void _refreshData() {
+    setState(() {
+      _dataVersion++;
+    });
+  }
+
+  // Generate pages dynamically to pass the unique key or callback
+  List<Widget> get _pages {
+    return [
+      const DashboardPage(),
+      const ScanPage(), // This will not be used as a page, scan opens fullscreen
+      HistoryPage(
+        key: ValueKey('history_$_dataVersion'),
+        onDataChanged: _refreshData,
+      ),
+      ProfilePage(
+        key: ValueKey('profile_$_dataVersion'),
+      ),
+    ];
+  }
 
   void _onItemTapped(int index) {
     // If scan button is tapped, navigate to fullscreen scan page
     if (index == 1) {
       Navigator.pushNamed(context, '/scan').then((_) {
-        setState(() {});
+        // When returning from scan, refresh data (History and Profile)
+        _refreshData();
       });
       return;
     }
@@ -53,7 +70,7 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: _pages, // Access via getter
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

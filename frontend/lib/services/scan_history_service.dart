@@ -97,4 +97,26 @@ class ScanHistoryService {
     final history = await getHistory();
     return history.length;
   }
+
+  // Get statistics (Total, Organik, Anorganik)
+  Future<Map<String, int>> getStatistics() async {
+    final history = await getHistory();
+    int organik = 0;
+    int anorganik = 0;
+
+    for (var scan in history) {
+      if (scan.category.toLowerCase().contains('organik') &&
+          !scan.category.toLowerCase().contains('anorganik')) {
+        organik++;
+      } else if (scan.category.toLowerCase().contains('anorganik')) {
+        anorganik++;
+      }
+    }
+
+    return {
+      'total': history.length,
+      'organik': organik,
+      'anorganik': anorganik,
+    };
+  }
 }

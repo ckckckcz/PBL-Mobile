@@ -7,7 +7,12 @@ import '../widgets/history_widgets.dart';
 import 'history_detail_page.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({Key? key}) : super(key: key);
+  final VoidCallback? onDataChanged;
+
+  const HistoryPage({
+    Key? key,
+    this.onDataChanged,
+  }) : super(key: key);
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -111,6 +116,7 @@ class _HistoryPageState extends State<HistoryPage> {
     if (confirmed == true) {
       await _historyService.clearHistory();
       await _loadHistory();
+      widget.onDataChanged?.call(); // Refresh parent stats
 
       if (mounted) {
         HistoryDialogs.showSuccessSnackBar(
@@ -129,7 +135,11 @@ class _HistoryPageState extends State<HistoryPage> {
           scanHistory: scan,
         ),
       ),
-    ).then((_) => _loadHistory());
+    ).then((_) {
+      _loadHistory();
+      widget.onDataChanged
+          ?.call(); // Refresh parent stats just in case item was deleted in detail
+    });
   }
 
   @override

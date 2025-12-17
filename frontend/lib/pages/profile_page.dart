@@ -9,6 +9,7 @@ import 'edit_profile_page.dart';
 import 'auth/change_password_step1.dart';
 import 'about_app.dart';
 import '../services/api_service.dart';
+import '../services/scan_history_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -18,6 +19,26 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final ScanHistoryService _scanHistoryService = ScanHistoryService();
+  int _totalScans = 0;
+  int _organicScans = 0;
+  int _inorganicScans = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final stats = await _scanHistoryService.getStatistics();
+    setState(() {
+      _totalScans = stats['total'] ?? 0;
+      _organicScans = stats['organik'] ?? 0;
+      _inorganicScans = stats['anorganik'] ?? 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '458',
+                                    '$_totalScans',
                                     style: AppTypography.heading3Semibold,
                                   ),
                                 ],
@@ -136,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '458',
+                                    '$_organicScans',
                                     style: AppTypography.heading3Semibold,
                                   ),
                                 ],
@@ -165,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '458',
+                                    '$_inorganicScans',
                                     style: AppTypography.heading3Semibold,
                                   ),
                                 ],
@@ -186,7 +207,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           context,
                           MaterialPageRoute(
                               builder: (context) => const HistoryPage()),
-                        );
+                        ).then((_) =>
+                            _loadStats()); // Refresh stats when returning from History
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16),
