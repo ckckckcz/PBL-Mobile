@@ -404,11 +404,11 @@ class _AuthPageState extends State<AuthPage>
             hintText: 'Masukkan Email',
             hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
             border: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -448,11 +448,11 @@ class _AuthPageState extends State<AuthPage>
             hintText: 'Masukkan kata sandi',
             hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
             border: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             suffixIcon: IconButton(
@@ -514,7 +514,7 @@ class _AuthPageState extends State<AuthPage>
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFF4CAF50),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
@@ -596,11 +596,11 @@ class _AuthPageState extends State<AuthPage>
             hintText: 'Masukkan nama lengkap',
             hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
             border: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -640,11 +640,11 @@ class _AuthPageState extends State<AuthPage>
             hintText: 'Masukkan Email',
             hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
             border: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              borderSide: BorderSide(color: AppColors.primary, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -684,11 +684,11 @@ class _AuthPageState extends State<AuthPage>
             hintText: 'Buat kata sandi',
             hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
             border: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              borderSide: BorderSide(color: AppColors.primary, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             suffixIcon: IconButton(
@@ -742,11 +742,11 @@ class _AuthPageState extends State<AuthPage>
             hintText: 'Konfirmasi kata sandi',
             hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
             border: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: AppColors.border, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              borderSide: BorderSide(color: AppColors.primary, width: 1),
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             suffixIcon: IconButton(
@@ -845,7 +845,7 @@ class _AuthPageState extends State<AuthPage>
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFF4CAF50),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(

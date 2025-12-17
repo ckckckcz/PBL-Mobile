@@ -10,6 +10,8 @@ import 'pages/scan_page.dart';
 import 'pages/scan_result.dart';
 import 'pages/about_app.dart';
 import 'pages/history.dart';
+import 'pages/splash_page.dart'; 
+import 'pages/onboarding_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,8 +37,10 @@ class MyApp extends StatelessWidget {
       title: 'Eco Waste Detector',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/auth',
+      initialRoute: '/splash',
       routes: {
+        '/splash': (context) => const SplashPage(),
+        '/onboarding': (context) => const OnboardingPage(),
         '/auth': (context) => const AuthPage(initialTab: 0),
         '/login': (context) => const AuthPage(initialTab: 0),
         '/register': (context) => const AuthPage(initialTab: 1),

@@ -1,51 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-class AppColors {
-  // Warna Utama - Hijau Ramah Lingkungan
-  static const Color primary = Color(0xFF4CAF50); // Hijau muda
-  static const Color primaryLight = Color(0xFF81C784);
-  static const Color primaryDark = Color(0xFF388E3C);
-
-  // Warna Sekunder
-  static const Color secondary = Color(0xFF66BB6A);
-  static const Color accent = Color(0xFFFF9800); // Aksen oranye
-  static const Color accentBlue = Color(0xFF64B5F6); // Aksen biru muda
-
-  // Warna Dasar
-  static const Color background = Color(0xFFF5F9F6); // Putih kehijauan lembut
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color cardBackground = Color(0xFFFFFFFF);
-
-  // Warna Text
-  static const Color textPrimary = Color(0xFF2E3A2F);
-  static const Color textSecondary = Color(0xFF607D6B);
-  static const Color textLight = Color(0xFF9E9E9E);
-
-  // Warna Abu Lembut
-  static const Color grey = Color(0xFFE0E0E0);
-  static const Color greyLight = Color(0xFFF5F5F5);
-  static const Color greyDark = Color(0xFF9E9E9E);
-
-  // Warna Status
-  static const Color success = Color(0xFF66BB6A);
-  static const Color warning = Color(0xFFFFA726);
-  static const Color error = Color(0xFFEF5350);
-  static const Color info = Color(0xFF42A5F5);
-
-  // Gradients
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [Color(0xFFF5F9F6), Color(0xFFE8F5E9)],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-}
+import '../constants/app_colors.dart';
+import 'app_typography.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -54,53 +10,38 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
-        secondary: AppColors.secondary,
+        secondary: AppColors.primaryLight, // Using light shade as secondary
         surface: AppColors.surface,
         background: AppColors.background,
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,
 
-      // Typography dengan Google Fonts - Inter
+      // Typography System using AppTypography
       textTheme: GoogleFonts.interTextTheme(
-        const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-          displayMedium: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-          displaySmall: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          titleLarge: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          titleMedium: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-          bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimary),
-          bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-          labelLarge: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
+        TextTheme(
+          // Display
+          displayLarge: AppTypography.display1Bold, // Display 1
+          displayMedium: AppTypography.display2Bold, // Display 2
+          displaySmall: AppTypography.display3Bold, // Display 3
+
+          // Headline (Heading 1)
+          headlineMedium: AppTypography.heading1Semibold,
+
+          // Title (Heading 2 & 3)
+          titleLarge: AppTypography.heading2Semibold,
+          titleMedium: AppTypography.heading3Medium,
+          titleSmall: AppTypography.bodyLargeSemibold, // Optional mapping
+
+          // Body
+          bodyLarge: AppTypography.bodyLargeRegular,
+          bodyMedium: AppTypography.bodyMediumRegular,
+          bodySmall: AppTypography.bodySmallRegular,
+
+          // Label (Caption)
+          labelLarge: AppTypography.captionLargeMedium,
+          labelMedium: AppTypography.captionSmallMedium,
+          labelSmall: AppTypography.captionSmallRegular,
         ),
       ),
 
@@ -163,19 +104,19 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.grey),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.grey),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.error),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
       ),

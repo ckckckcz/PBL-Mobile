@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi membutuhkan akses kamera untuk mengambil foto sampah yang akan diklasifikasi.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi membutuhkan akses galeri untuk memilih foto sampah yang akan diklasifikasi.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aplikasi membutuhkan akses mikrofon untuk merekam video (jika diperlukan).</string>
 </dict>
 </plist>
