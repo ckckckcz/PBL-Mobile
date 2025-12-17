@@ -166,7 +166,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Selamat Pagi,',
+                  _getGreeting(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -337,5 +337,18 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
     );
+  }
+
+  String _getGreeting() {
+    var hour = DateTime.now().hour;
+    if (hour < 11) {
+      return 'Selamat Pagi,';
+    } else if (hour < 15) {
+      return 'Selamat Siang,';
+    } else if (hour < 18) {
+      return 'Selamat Sore,';
+    } else {
+      return 'Selamat Malam,';
+    }
   }
 }
