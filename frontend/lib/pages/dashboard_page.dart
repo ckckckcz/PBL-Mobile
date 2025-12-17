@@ -4,10 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../theme/app_typography.dart';
-import '../widgets/common_widgets.dart';
-import '../widgets/eco_tips_carousel.dart';
 import '../widgets/tips_list_widget.dart';
 import '../models/article_model.dart';
+import '../services/scan_history_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,11 +17,29 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final List<Article> articles = Article.getSampleArticles();
+  final ScanHistoryService _scanHistoryService = ScanHistoryService();
 
   // Data statistik
-  final int totalScans = 458;
-  final int organicWaste = 258;
-  final int inorganicWaste = 200;
+  int _totalScans = 0;
+  int _organicWaste = 0;
+  int _inorganicWaste = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final stats = await _scanHistoryService.getStatistics();
+    if (mounted) {
+      setState(() {
+        _totalScans = stats['total'] ?? 0;
+        _organicWaste = stats['organik'] ?? 0;
+        _inorganicWaste = stats['anorganik'] ?? 0;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +60,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
-                    await Future.delayed(const Duration(seconds: 1));
+                    await _loadStats(); // Reload actual stats
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -193,7 +210,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
                 Text(
-                  '$totalScans',
+                  '$_totalScans',
                   style: AppTypography.display2Bold.copyWith(
                     color: Colors.white,
                   ),
@@ -230,7 +247,7 @@ class _DashboardPageState extends State<DashboardPage> {
         Expanded(
           child: _buildStatCard(
             title: 'Sampah Organik',
-            value: '$organicWaste',
+            value: '$_organicWaste',
             subtitle: 'Pemindaian',
             color: const Color(0xFF66BB6A),
           ),
@@ -239,7 +256,7 @@ class _DashboardPageState extends State<DashboardPage> {
         Expanded(
           child: _buildStatCard(
             title: 'Sampah Anorganik',
-            value: '$inorganicWaste',
+            value: '$_inorganicWaste',
             subtitle: 'Pemindaian',
             color: const Color(0xFF42A5F5),
           ),

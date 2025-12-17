@@ -38,7 +38,9 @@ class _MainNavigationState extends State<MainNavigation> {
   // Generate pages dynamically to pass the unique key or callback
   List<Widget> get _pages {
     return [
-      const DashboardPage(),
+      DashboardPage(
+        key: ValueKey('dashboard_$_dataVersion'),
+      ),
       const ScanPage(), // This will not be used as a page, scan opens fullscreen
       HistoryPage(
         key: ValueKey('history_$_dataVersion'),
