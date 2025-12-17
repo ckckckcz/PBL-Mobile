@@ -17,7 +17,7 @@ class HistoryDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.neutral[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -30,7 +30,7 @@ class HistoryDetailPage extends StatelessWidget {
           ),
         ),
         title: Text(
-          'Hasil Pemindaian',
+          'Detail',
           style: AppTypography.bodyLargeSemibold.copyWith(
             color: Colors.black,
           ),
@@ -38,21 +38,15 @@ class HistoryDetailPage extends StatelessWidget {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImage(),
-              const SizedBox(height: 16),
-              _buildWasteInfo(),
-              const SizedBox(height: 24),
-              _buildTipsSection(),
-              const SizedBox(height: 24),
-              _buildScanAgainButton(context),
-              const SizedBox(height: 20),
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildImage(),
+            _buildWasteInfo(),
+            _buildTipsSection(),
+            _buildScanAgainButton(context),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -60,15 +54,23 @@ class HistoryDetailPage extends StatelessWidget {
 
   Widget _buildImage() {
     return Container(
-      width: double.infinity,
-      height: 360,
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        color: AppColors.neutral[50],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: _buildImageWidget(),
+      child: Container(
+        width: double.infinity,
+        height: 360,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: AppColors.neutral[50], // Inner placeholder color
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: _buildImageWidget(),
+        ),
       ),
     );
   }
@@ -116,6 +118,7 @@ class HistoryDetailPage extends StatelessWidget {
 
   Widget _buildWasteInfo() {
     return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -126,19 +129,22 @@ class HistoryDetailPage extends StatelessWidget {
         children: [
           Text(
             'Jenis Sampah',
-            style: AppTypography.bodySmallRegular.copyWith(
+            style: AppTypography.bodySmallMedium.copyWith(
               color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 scanHistory.wasteType,
-                style: AppTypography.bodyLargeBold.copyWith(
+                style: AppTypography.bodyLargeSemibold.copyWith(
                   color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18, // Slightly adjusted for 'Large' feeling
                 ),
               ),
               _buildCategoryBadge(),
@@ -183,20 +189,29 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildTipsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tips Mengolah',
-          style: AppTypography.heading3Semibold.copyWith(
-            color: Colors.black,
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tips Mengolah',
+            style: AppTypography.bodyLargeSemibold.copyWith(
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        ...scanHistory.tips.asMap().entries.map((entry) {
-          return _buildTipItem(entry.value, entry.key);
-        }).toList(),
-      ],
+          const SizedBox(height: 16),
+          ...scanHistory.tips.asMap().entries.map((entry) {
+            return _buildTipItem(entry.value, entry.key);
+          }).toList(),
+        ],
+      ),
     );
   }
 
@@ -241,7 +256,8 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildScanAgainButton(BuildContext context) {
-    return SizedBox(
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 24),
       width: double.infinity,
       height: 48,
       child: ElevatedButton(
