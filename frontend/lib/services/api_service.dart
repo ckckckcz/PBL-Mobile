@@ -15,7 +15,7 @@ class ApiService {
   // - iOS Simulator: http://localhost:8000
   // - Physical Device: http://YOUR_COMPUTER_IP:8000
   static const String baseUrl =
-      'http://192.168.1.25:8080'; // Backend running on port 8080
+      'http://192.168.1.2:8000'; // Backend running on port 8080
   // static const String baseUrl = 'http://192.168.1.100:8000';
 
   // Endpoints
