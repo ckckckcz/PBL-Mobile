@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../constants/app_colors.dart';
+import '../../theme/app_typography.dart';
 
 class ChangePasswordStep2Page extends StatefulWidget {
   const ChangePasswordStep2Page({super.key});
 
   @override
-  State<ChangePasswordStep2Page> createState() => _ChangePasswordStep2PageState();
+  State<ChangePasswordStep2Page> createState() =>
+      _ChangePasswordStep2PageState();
 }
 
 class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
@@ -132,6 +136,20 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
+              color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Ubah Kata Sandi',
+          style: AppTypography.heading3Semibold.copyWith(color: Colors.black),
+        ),
+        centerTitle: true,
+      ),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.dark,
         child: SafeArea(
@@ -164,47 +182,36 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
 
   /// Build lock icon
   Widget _buildLockIcon() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Outer light circle
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFFBF7),
-            shape: BoxShape.circle,
+    return Center(
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              PhosphorIcons.lockKey(PhosphorIconsStyle.regular),
+              color: AppColors.primary,
+              size: 40,
+            ),
           ),
         ),
-        // Inner circle with the lock icon
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            color: const Color(0xFFDFF8F0),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.lock,
-            color: Color(0xFF4CAF50),
-            size: 35,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   /// Build title
   Widget _buildTitle() {
-    return const Text(
-      'Ubah Kata Sandi',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-    );
+    return const SizedBox.shrink(); // Title moved to AppBar
   }
 
   /// Build description
@@ -225,12 +232,10 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Buat Kata Sandi Baru',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -244,22 +249,28 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
             obscureText: _obscureNewPassword,
             decoration: InputDecoration(
               hintText: 'Masukkan kata sandi',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9E9E9E),
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary, width: 1),
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
               suffixIcon: IconButton(
                 onPressed: _toggleNewPasswordVisibility,
                 icon: Icon(
-                  _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
-                  color: const Color(0xFF757575),
+                  _obscureNewPassword
+                      ? PhosphorIcons.eyeSlash(PhosphorIconsStyle.regular)
+                      : PhosphorIcons.eye(PhosphorIconsStyle.regular),
+                  color: AppColors.textSecondary,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
@@ -288,12 +299,10 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Konfirmasi Kata Sandi',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -307,22 +316,28 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
             obscureText: _obscureConfirmPassword,
             decoration: InputDecoration(
               hintText: 'Masukkan kata sandi',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9E9E9E),
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary, width: 1),
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
               suffixIcon: IconButton(
                 onPressed: _toggleConfirmPasswordVisibility,
                 icon: Icon(
-                  _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                  color: const Color(0xFF757575),
+                  _obscureConfirmPassword
+                      ? PhosphorIcons.eyeSlash(PhosphorIconsStyle.regular)
+                      : PhosphorIcons.eye(PhosphorIconsStyle.regular),
+                  color: AppColors.textSecondary,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
@@ -352,7 +367,7 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFF4CAF50),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
@@ -370,12 +385,10 @@ class _ChangePasswordStep2PageState extends State<ChangePasswordStep2Page> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
+                : Text(
                     'Ubah Kata Sandi',
-                    style: TextStyle(
+                    style: AppTypography.bodyLargeSemibold.copyWith(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
           ),
