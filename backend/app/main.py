@@ -28,6 +28,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from .api import health, predict
 from .core.config import APP_MODE
 from .core.logger import setup_logger
+from .core.database import test_supabase_connection, get_connection_status
 from .services.model_service import get_model_service, init_model_service
 from .services.prediction_service import (
     get_prediction_service,
@@ -517,7 +518,15 @@ def build_dashboard_html() -> str:
         <div id="model-status"></div>
       </section>
 
-      <section class="card span-8">
+      <section class="card span-4">
+        <div class="actions">
+          <button id="test-database">Test Connection</button>
+        </div>
+        <h2>Database Status</h2>
+        <div id="database-status"></div>
+      </section>
+
+      <section class="card span-4">
         <div class="actions">
           <button id="refresh-tests">Run Self-Test</button>
           <button id="refresh-data">Refresh Data</button>
@@ -700,6 +709,9 @@ def build_dashboard_html() -> str:
             statusBadge(data.selfTest.overall)
           }}
         `;
+
+        // Update database status
+        await refreshDatabaseStatus();
         document.getElementById("self-test-table").innerHTML = renderSelfTestTable(data.selfTest.tests);
         document.getElementById("request-logs").innerHTML = renderRequestLogs(data.recentRequests);
         document.getElementById("event-logs").innerHTML = renderEventLogs(data.recentEvents);
@@ -719,6 +731,82 @@ def build_dashboard_html() -> str:
       }} catch (err) {{
         console.error(err);
         alert("Self-test gagal dijalankan. Lihat log untuk detail.");
+      }}
+    }}
+
+    async function fetchDatabaseStatus() {{
+      try {{
+        const response = await fetch("/dashboard/database-status");
+        if (!response.ok) throw new Error("Failed to fetch database status");
+        return response.json();
+      }} catch (err) {{
+        console.error(err);
+        return {{ app_mode: "unknown", credentials_set: false, client_initialized: false, error: err.message }};
+      }}
+    }}
+
+    async function testDatabaseConnection() {{
+      try {{
+        document.getElementById("database-status").innerHTML = `<p style="color: var(--muted);">🔄 Testing connection...</p>`;
+        const response = await fetch("/dashboard/test-database", {{ method: "POST" }});
+        if (!response.ok) throw new Error("Database test failed");
+        const result = await response.json();
+        renderDatabaseStatus(result);
+      }} catch (err) {{
+        console.error(err);
+        document.getElementById("database-status").innerHTML = `<p style="color: var(--danger);">❌ Test error: ${{err.message}}</p>`;
+      }}
+    }}
+
+    function renderDatabaseStatus(status) {{
+      const container = document.getElementById("database-status");
+      if (!container) return;
+
+      let html = `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+
+      // App Mode
+      html += `<div><strong>Mode:</strong> <span style="color: ${{status.app_mode === 'production' ? 'var(--accent)' : 'var(--muted)'}};">${{status.app_mode || 'unknown'}}</span></div>`;
+
+      if (status.app_mode === 'demo') {{
+        html += `<div style="color: var(--muted);">ℹ️ Demo mode - database not required</div>`;
+      }} else {{
+        // Credentials
+        if (status.credentials_set !== undefined) {{
+          html += `<div><strong>Credentials:</strong> ${{status.credentials_set ? '✅ Set' : '❌ Not set'}}</div>`;
+        }}
+
+        // Connection Status
+        if (status.connection_ok !== undefined) {{
+          html += `<div><strong>Connection:</strong> ${{status.connection_ok ? '✅ Connected' : '❌ Failed'}}</div>`;
+        }}
+
+        // Client Initialized
+        if (status.client_initialized !== undefined) {{
+          html += `<div><strong>Client:</strong> ${{status.client_initialized ? '✅ Initialized' : '⏳ Not initialized'}}</div>`;
+        }}
+
+        // Message
+        if (status.message) {{
+          const color = status.success ? 'var(--accent)' : 'var(--danger)';
+          html += `<div style="color: ${{color}}; margin-top: 8px;"><strong>${{status.success ? '✅' : '❌'}}</strong> ${{status.message}}</div>`;
+        }}
+
+        // Details
+        if (status.details) {{
+          html += `<div style="color: var(--muted); font-size: 0.9em; margin-top: 4px;">${{status.details}}</div>`;
+        }}
+      }}
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }}
+
+    async function refreshDatabaseStatus() {{
+      try {{
+        const status = await fetchDatabaseStatus();
+        renderDatabaseStatus(status);
+      }} catch (err) {{
+        console.error(err);
       }}
     }}
 
@@ -940,6 +1028,7 @@ def build_dashboard_html() -> str:
 
     document.getElementById("refresh-tests").addEventListener("click", triggerSelfTest);
     document.getElementById("refresh-data").addEventListener("click", refreshDashboard);
+    document.getElementById("test-database").addEventListener("click", testDatabaseConnection);
 
     refreshDashboard();
     setInterval(refreshDashboard, 5000);
@@ -1035,6 +1124,24 @@ async def startup_event() -> None:
         {"app_mode": APP_MODE, "base_dir": str(BASE_DIR)},
     )
 
+    # Test database connection
+    logger.info("=" * 60)
+    logger.info("[STARTUP] Testing database connection...")
+    db_test = test_supabase_connection()
+    if db_test['success']:
+        logger.info(f"[STARTUP] ✅ {db_test['message']}")
+        logger.info(f"[STARTUP] {db_test['details']}")
+    else:
+        logger.error(f"[STARTUP] ❌ {db_test['message']}")
+        logger.error(f"[STARTUP] {db_test['details']}")
+
+    append_event(
+        "INFO" if db_test['success'] else "WARNING",
+        "Database connection test",
+        db_test,
+    )
+    logger.info("=" * 60)
+
     model_service = init_model_service(base_dir=BASE_DIR)
     append_event("INFO", "Model service initialised")
 
@@ -1081,6 +1188,20 @@ async def dashboard_self_test() -> JSONResponse:
     return JSONResponse(payload)
 
 
+@app.get("/dashboard/database-status", response_class=JSONResponse)
+async def dashboard_database_status() -> JSONResponse:
+    """Get current database connection status."""
+    status = get_connection_status()
+    return JSONResponse(status)
+
+
+@app.post("/dashboard/test-database", response_class=JSONResponse)
+async def dashboard_test_database() -> JSONResponse:
+    """Test database connection and return detailed results."""
+    result = test_supabase_connection()
+    return JSONResponse(result)
+
+
 # Register existing API routers
 app.include_router(health.router)
 app.include_router(predict.router)
@@ -1089,19 +1210,23 @@ append_event("INFO", "Core routers registered", {"routes": ["health", "predict"]
 
 if APP_MODE.lower() == "production":
     try:
-        from .api import auth, users
+        from . import auth
+        from .api import users
 
         app.include_router(auth.router)
         app.include_router(users.router)
         append_event("INFO", "Production routers enabled", {"routes": ["auth", "users"]})
+        logger.info("[MAIN] ✅ Production routers (auth, users) mounted successfully")
     except ImportError as exc:
         append_event(
             "WARNING",
             "Failed to import production routers",
             {"error": str(exc)},
         )
+        logger.error(f"[MAIN] ❌ Failed to import production routers: {exc}")
 else:
     append_event("INFO", "Auth/users routers disabled (demo mode)")
+    logger.info("[MAIN] ⚠️  Demo mode - auth/users routers not mounted")
 
 
 logger.info("[ROUTES] Ready for deployment in %s mode", APP_MODE.upper())

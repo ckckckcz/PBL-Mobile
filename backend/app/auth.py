@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr, Field
 from supabase import create_client
-from .config import SUPABASE_URL, SUPABASE_KEY
+from .core.config import SUPABASE_URL, SUPABASE_KEY
 import bcrypt
 import jwt
 from datetime import datetime, timedelta

@@ -73,7 +73,7 @@ def test_login(email="test@example.com", password="password123"):
         print(f"Payload: {json.dumps(payload, indent=2)}")
         
         response = requests.post(
-            f"{BASE_URL}/api/auth/login",
+        f"{BASE_URL}/api/auth/login",
             json=payload,
             timeout=5
         )
