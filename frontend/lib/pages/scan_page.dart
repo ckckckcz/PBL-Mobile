@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:pilar/constants/app_colors.dart';
 import '../models/scan_history_model.dart';
 import '../services/scan_history_service.dart';
 import '../services/api_service.dart';
@@ -698,13 +699,13 @@ class _ScanPageState extends State<ScanPage> {
                   child: Center(
                     child: _isScanning
                         ? const CircularProgressIndicator(
-                            color: Color(0xFF4CAF50),
+                            color: AppColors.primary,
                           )
                         : Container(
                             width: 56,
                             height: 56,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF4CAF50),
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                           ),
