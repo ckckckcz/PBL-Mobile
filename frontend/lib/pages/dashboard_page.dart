@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
@@ -25,91 +26,94 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        color: AppColors.neutral[50],
-        child: Column(
-          children: [
-            // Fixed Header
-            _buildHeader()
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.2, end: 0),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: SafeArea(
+        child: Container(
+          color: AppColors.neutral[50],
+          child: Column(
+            children: [
+              // Fixed Header
+              _buildHeader()
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: -0.2, end: 0),
 
-            // Scrollable Content
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  await Future.delayed(const Duration(seconds: 1));
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Data berhasil diperbarui'),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                  }
-                },
-                color: AppColors.primary,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-
-                      // Total Pemindaian Card
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildTotalScansCard()
-                            .animate()
-                            .fadeIn(delay: 100.ms, duration: 400.ms)
-                            .slideY(begin: 0.2, end: 0),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Stats Row (Organik & Anorganik)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildStatsRow()
-                            .animate()
-                            .fadeIn(delay: 200.ms, duration: 400.ms)
-                            .slideY(begin: 0.2, end: 0),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Tips Mengelola Sampah
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+              // Scrollable Content
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await Future.delayed(const Duration(seconds: 1));
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Data berhasil diperbarui'),
+                          backgroundColor: AppColors.success,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Tips Mengelola Sampah',
-                              style: AppTypography.bodyLargeSemibold.copyWith(
-                                color: Colors.black,
+                      );
+                    }
+                  },
+                  color: AppColors.primary,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
+
+                        // Total Pemindaian Card
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildTotalScansCard()
+                              .animate()
+                              .fadeIn(delay: 100.ms, duration: 400.ms)
+                              .slideY(begin: 0.2, end: 0),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Stats Row (Organik & Anorganik)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildStatsRow()
+                              .animate()
+                              .fadeIn(delay: 200.ms, duration: 400.ms)
+                              .slideY(begin: 0.2, end: 0),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Tips Mengelola Sampah
+                        Container(
+                          margin: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tips Mengelola Sampah',
+                                style: AppTypography.bodyLargeSemibold.copyWith(
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            const TipsListWidget(),
-                          ],
-                        ),
-                      ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
+                              const SizedBox(height: 16),
+                              const TipsListWidget(),
+                            ],
+                          ),
+                        ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
 
-                      const SizedBox(height: 16),
-                    ],
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
