@@ -24,6 +24,9 @@ class ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayCategory = _getDisplayCategory(category);
+    final categoryColor = AppColors.getCategoryColor(category ?? '');
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(24),
@@ -40,115 +43,61 @@ class ResultCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildBadges(),
-          const SizedBox(height: 16),
-          // _buildWasteType(),
-          const SizedBox(height: 12),
-          _buildDescription(),
+          _buildInfoRow(
+            'Jenis Sampah',
+            displayCategory,
+            valueColor: categoryColor,
+            icon: AppColors.getCategoryIcon(category ?? ''),
+          ),
+          const Divider(height: 32, color: AppColors.borderLight),
+          _buildInfoRow(
+            'Akurasi',
+            '${confidence?.toStringAsFixed(1) ?? '0'}%',
+            valueColor: AppColors.success,
+            icon: PhosphorIcons.target(PhosphorIconsStyle.regular),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBadges() {
+  String _getDisplayCategory(String? cat) {
+    final lower = cat?.toLowerCase() ?? '';
+    if (['organik', 'organic', 'sampah organik'].contains(lower))
+      return 'Organik';
+    if (['anorganik', 'inorganic', 'sampah anorganik'].contains(lower))
+      return 'Anorganik';
+    return cat ?? (cat?.isNotEmpty == true ? cat! : '-');
+  }
+
+  Widget _buildInfoRow(String label, String value,
+      {Color? valueColor, IconData? icon}) {
     return Row(
       children: [
-        _CategoryBadge(category: category),
-        const Spacer(),
-        _ConfidenceBadge(confidence: confidence),
-        const SizedBox(width: 8)
-      ],
-    );
-  }
-
-  Widget _buildWasteType() {
-    return Text(
-      wasteType ?? 'Jenis Sampah Tidak Diketahui',
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildDescription() {
-    return Text(
-      description ?? 'Tidak ada deskripsi tersedia',
-      style: TextStyle(
-        fontSize: 14,
-        color: Colors.grey[600],
-        height: 1.5,
-      ),
-    );
-  }
-}
-
-/// Category badge widget
-class _CategoryBadge extends StatelessWidget {
-  final String? category;
-
-  const _CategoryBadge({this.category});
-
-  @override
-  Widget build(BuildContext context) {
-    final categoryColor = AppColors.getCategoryColor(category ?? '');
-    final categoryIcon = AppColors.getCategoryIcon(category ?? '');
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            categoryIcon,
-            size: 16,
-            color: categoryColor,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            category ?? 'Unknown',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: categoryColor,
+        if (icon != null) ...[
+          Icon(icon, size: 24, color: AppColors.textSecondary),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Confidence badge widget
-class _ConfidenceBadge extends StatelessWidget {
-  final double? confidence;
-
-  const _ConfidenceBadge({this.confidence});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        '${confidence?.toStringAsFixed(1) ?? '0'}%',
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.success,
         ),
-      ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            color: valueColor ?? AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

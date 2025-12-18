@@ -75,10 +75,14 @@ WASTE_TYPE_CATEGORY_MAP = {
 }
 
 
+import cv2
+from PIL import Image
+
 class PredictionService:
     """
     Service for handling waste classification predictions with Model V2
-    Uses KMeans clustering and XGBoost classification
+    Uses KMeans clustering (BOVW) + Color Histogram and XGBoost classification
+    Total features: 712 (200 BOVW + 512 Color Hist)
     """
 
     def __init__(self, model: Dict[str, Any]):
@@ -88,23 +92,20 @@ class PredictionService:
         Args:
             model: Dictionary containing model components:
                 - kmeans_model: MiniBatchKMeans for feature clustering
-                - scaler_model: StandardScaler for feature scaling
                 - xgb_model: XGBoost classifier
-                - vocab_size: Size of vocabulary for KMeans clustering
-                - orb_n_features: Number of ORB features extracted
+                - vocab_size: Size of vocabulary for KMeans clustering (default 200)
         """
         self.model_dict = model
         self.kmeans_model = model.get('kmeans_model')
-        self.scaler_model = model.get('scaler_model')
         self.xgb_model = model.get('xgb_model')
         self.vocab_size = model.get('vocab_size', 200)
-        self.orb_n_features = model.get('orb_n_features', 500)
+
+        # ORB detector
+        self.orb = cv2.ORB_create()
 
         logger.info(f"[INIT] KMeans model: {type(self.kmeans_model).__name__}")
-        logger.info(f"[INIT] Scaler: {type(self.scaler_model).__name__}")
         logger.info(f"[INIT] XGBoost model: {type(self.xgb_model).__name__}")
         logger.info(f"[INIT] Vocab size: {self.vocab_size}")
-        logger.info(f"[INIT] ORB n_features: {self.orb_n_features}")
 
         # Get XGBoost classes if available
         if hasattr(self.xgb_model, 'classes_'):
@@ -114,87 +115,99 @@ class PredictionService:
             self.classes = [0, 1]  # Default binary classification
             logger.warning("[INIT] XGBoost model doesn't have classes_ attribute, using default [0, 1]")
 
-    def predict(self, features: np.ndarray) -> Dict[str, Any]:
+    def extract_hybrid_features(self, image: Any) -> Optional[np.ndarray]:
         """
-        Perform prediction on preprocessed image features
+        Extract hybrid features (BOVW + Color Hist)
+        Matches the pipeline: ORB -> Descriptors -> KMeans Predict -> Hist(200) + ColorHist(512)
+        Total: 712 features
 
         Args:
-            features: Preprocessed image features (shape: 1, 32)
-
-        Returns:
-            Dict containing prediction results
-
-        Raises:
-            Exception: If prediction fails
+            image: PIL Image or numpy array (BGR)
         """
-        logger.info(f"[PREDICT] Input features shape: {features.shape}, dtype: {features.dtype}")
-        logger.info(f"[PREDICT] Features range: min={features.min():.4f}, max={features.max():.4f}")
+        # Convert PIL to BGR if needed
+        if isinstance(image, Image.Image):
+            img_array = np.array(image)
+            img = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        elif isinstance(image, np.ndarray):
+            img = image
+        else:
+            logger.error(f"[EXTRACT] Unsupported image type: {type(image)}")
+            return None
 
-        # Ensure float64 dtype for KMeans compatibility
-        features_f64 = features.astype(np.float64)
-        logger.info(f"[PREDICT] Features dtype converted to: {features_f64.dtype}")
+        # 1. BOVW Features (200)
+        try:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            kp, des = self.orb.detectAndCompute(gray, None)
 
-        # Create vocabulary using KMeans directly on raw features
-        logger.info(f"[PREDICT] Creating vocabulary with KMeans (vocab_size={self.vocab_size})...")
-        # Predict cluster assignments for raw features
-        kmeans_predictions = self.kmeans_model.predict(features_f64)
-        logger.info(f"[PREDICT] ✓ KMeans predictions: {kmeans_predictions}")
+            if des is not None:
+                # Predict visual words using loaded KMeans
+                # Ensure des is float for KMeans predict if needed, though usually standard for ORB is uint8
+                # But sklearn kmeans usually expects float. Let's check.
+                # ORB descriptors are uint8. Sklearn KMeans.predict expects float.
+                des_float = des.astype(np.float64) 
+                visual_words = self.kmeans_model.predict(des_float)
+                
+                # Histogram of visual words
+                hist_bovw, _ = np.histogram(visual_words, bins=np.arange(self.vocab_size + 1), density=True)
+            else:
+                hist_bovw = np.zeros(self.vocab_size)
+        except Exception as e:
+            logger.error(f"[EXTRACT] BOVW error: {e}")
+            hist_bovw = np.zeros(self.vocab_size)
 
-        # Create vocabulary vector (bag of words representation) - 200 features
-        vocab_vector = np.zeros((1, self.vocab_size))
-        for cluster_id in kmeans_predictions:
-            if 0 <= cluster_id < self.vocab_size:
-                vocab_vector[0, cluster_id] += 1
+        # 2. Color Histogram (512)
+        try:
+            img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            # 8 bins per channel: 8*8*8 = 512
+            hist_color = cv2.calcHist([img_hsv], [0, 1, 2], None, [8, 8, 8], [0, 180, 0, 256, 0, 256])
+            cv2.normalize(hist_color, hist_color, 0, 1, cv2.NORM_MINMAX)
+            hist_color_flat = hist_color.flatten() # 512
+        except Exception as e:
+            logger.error(f"[EXTRACT] Color Hist error: {e}")
+            hist_color_flat = np.zeros(512)
 
-        logger.info(f"[PREDICT] ✓ Vocabulary vector shape: {vocab_vector.shape}")
-        logger.info(f"[PREDICT] Non-zero clusters: {np.count_nonzero(vocab_vector)}")
+        # Combine
+        combined_features = np.hstack([hist_bovw, hist_color_flat]) # 200 + 512 = 712
+        
+        # Reshape to (1, 712) for prediction
+        return combined_features.reshape(1, -1)
 
-        # Expand vocabulary vector to 712 features for XGBoost
-        # Use: original 200 + squared features (200) + sqrt features (200) + ones (112)
-        logger.info("[PREDICT] Expanding vocabulary to 712 features for XGBoost...")
+    def predict(self, image: Any) -> Dict[str, Any]:
+        """
+        Perform prediction on image using hybrid features
 
-        # Original 200 features
-        feat_200 = vocab_vector.copy()
+        Args:
+            image: PIL Image or numpy array
+        """
+        # Extract features
+        features = self.extract_hybrid_features(image)
+        
+        if features is None:
+            raise ValueError("Failed to extract features from image")
 
-        # Squared features (200)
-        feat_squared = np.square(vocab_vector)
+        logger.info(f"[PREDICT] Hybrid features shape: {features.shape}")
+        
+        if features.shape[1] != 712:
+             # Basic fallback if dimensions mismatch (shouldn't happen with correct logic)
+             logger.error(f"[PREDICT] unexpected feature shape {features.shape}")
 
-        # Sqrt features (200) - safe sqrt with offset
-        feat_sqrt = np.sqrt(np.maximum(vocab_vector, 0))
-
-        # Padding with ones (112 to reach 712)
-        feat_padding = np.ones((1, 112))
-
-        # Concatenate all features: 200 + 200 + 200 + 112 = 712
-        expanded_features = np.hstack([feat_200, feat_squared, feat_sqrt, feat_padding])
-
-        if expanded_features.shape[1] != 712:
-            logger.error(f"[PREDICT] Expanded features shape mismatch: {expanded_features.shape[1]} != 712")
-            raise ValueError(f"Expected 712 features, got {expanded_features.shape[1]}")
-
-        logger.info(f"[PREDICT] ✓ Expanded features shape: {expanded_features.shape}")
-        logger.info(f"[PREDICT] Expanded range: min={expanded_features.min():.4f}, max={expanded_features.max():.4f}")
-
-        # Predict using XGBoost on expanded features
-        logger.info("[PREDICT] XGBoost predicting on expanded features...")
-        xgb_predictions = self.xgb_model.predict(expanded_features)
-        logger.info(f"[PREDICT] ✓ XGBoost raw prediction: {xgb_predictions}")
-
+        # Predict using XGBoost
+        logger.info("[PREDICT] XGBoost predicting...")
+        xgb_predictions = self.xgb_model.predict(features)
+        
         # Get probabilities
         if hasattr(self.xgb_model, 'predict_proba'):
-            probabilities = self.xgb_model.predict_proba(expanded_features)
-            logger.info(f"[PREDICT] ✓ Probabilities shape: {probabilities.shape}")
+            probabilities = self.xgb_model.predict_proba(features)
             confidence = float(np.max(probabilities) * 100)
             logger.info(f"[PREDICT] ✓ Confidence: {confidence:.2f}%")
         else:
             probabilities = None
-            confidence = 85.0  # Default confidence if not available
-            logger.warning("[PREDICT] XGBoost model doesn't have predict_proba, using default confidence")
+            confidence = 85.0
+            logger.warning("[PREDICT] No predict_proba, using default confidence")
 
-        # Get predicted class index (numeric: 0 or 1)
+        # Get predicted class index
         pred_class_idx = int(xgb_predictions[0])
-        logger.info(f"[PREDICT] ✓ Predicted class index: {pred_class_idx}")
-
+        
         # Map numeric class to category name
         category = CLASS_TO_CATEGORY.get(pred_class_idx, "ANORGANIK")
         logger.info(f"[PREDICT] ✓ Mapped to category: {category}")
@@ -206,17 +219,6 @@ class PredictionService:
         else:  # ANORGANIK
             waste_type = "Sampah Anorganik"
             waste_class = "anorganik"
-
-        logger.info(f"[PREDICT] ✓ Waste type: {waste_type}")
-
-        # Log probabilities
-        logger.info("[PREDICT] ===== Class Probabilities =====")
-        if probabilities is not None:
-            for idx, class_idx in enumerate(self.classes):
-                if probabilities.shape[1] > idx:
-                    prob_value = float(probabilities[0][idx]) * 100
-                    cat_name = CLASS_TO_CATEGORY.get(int(class_idx), "UNKNOWN")
-                    logger.info(f"    Class {class_idx} ({cat_name:<10}): {prob_value:>6.2f}%")
 
         return {
             "waste_class": waste_class,
@@ -234,13 +236,6 @@ class PredictionService:
     ) -> Dict[str, Any]:
         """
         Format prediction results into API response for mobile
-
-        Args:
-            prediction_result: Prediction result from predict()
-            include_debug_info: If True, include detailed model info (for debugging only)
-
-        Returns:
-            Formatted response dictionary for mobile
         """
         waste_type = prediction_result["waste_type"]
         category = prediction_result["category"]
@@ -265,46 +260,19 @@ class PredictionService:
         if include_debug_info:
             probabilities = prediction_result.get("probabilities")
             response["data"]["modelInfo"] = {
-                "confidenceSource": "XGBoost.predict_proba() - real probability from model",
-                "pipeline": {
-                    "step_1": "Image → Extract 38 hand-crafted features (HSV, GLCM, HOG, Edges, etc)",
-                    "step_2": "StandardScaler.transform(38 features) → scaled features",
-                    "step_3": "KMeans.predict(scaled features) → cluster assignments",
-                    "step_4": "Create bag-of-words vocabulary vector (vocab_size=200)",
-                    "step_5": "XGBoost.predict(vocabulary vector) → numeric class prediction (0 or 1)",
-                    "step_6": "Map numeric class to category (0→ORGANIK, 1→ANORGANIK)",
-                    "step_7": "XGBoost.predict_proba() → REAL confidence"
-                },
-                "modelComponents": {
-                    "kmeans_model_type": type(self.kmeans_model).__name__,
-                    "scaler_type": type(self.scaler_model).__name__,
-                    "xgb_model_type": type(self.xgb_model).__name__,
-                    "vocab_size": self.vocab_size,
-                    "orb_n_features": self.orb_n_features,
-                    "n_classes": len(self.classes),
-                    "class_mapping": CLASS_TO_CATEGORY
-                },
+                "confidenceSource": "XGBoost.predict_proba()",
+                "pipeline": "Hybrid: BOVW (ORB+KMeans) + Color Hist (HSV)",
+                "features": "200 (BOVW) + 512 (HSV) = 712",
                 "probabilitiesPerClass": self._format_probabilities(probabilities) if probabilities is not None else {}
             }
 
         return response
 
     def _format_probabilities(self, probabilities: Optional[np.ndarray]) -> Dict[str, Any]:
-        """
-        Format probabilities for each class as structured data
-        FOR DEBUG USE ONLY - Not sent to mobile apps
-
-        Args:
-            probabilities: Probabilities array from model
-
-        Returns:
-            Dictionary with probabilities per class
-        """
         if probabilities is None or not self.classes:
             return {}
 
         result = {}
-
         for idx, class_idx in enumerate(self.classes):
             if probabilities.shape[1] > idx:
                 prob_value = round(float(probabilities[0][idx]) * 100, 2)
@@ -313,7 +281,6 @@ class PredictionService:
                     "probability": prob_value,
                     "category": f"Sampah {category.title()}"
                 }
-
         return result
 
 
@@ -322,15 +289,6 @@ _prediction_service: Optional[PredictionService] = None
 
 
 def init_prediction_service(model: Dict[str, Any]) -> PredictionService:
-    """
-    Initialize prediction service with loaded model
-
-    Args:
-        model: Model dictionary containing components
-
-    Returns:
-        PredictionService instance
-    """
     global _prediction_service
     _prediction_service = PredictionService(model)
     logger.info("[SERVICE] ✓ Prediction service initialized")
@@ -338,10 +296,4 @@ def init_prediction_service(model: Dict[str, Any]) -> PredictionService:
 
 
 def get_prediction_service() -> Optional[PredictionService]:
-    """
-    Get prediction service instance
-
-    Returns:
-        PredictionService instance or None if not initialized
-    """
     return _prediction_service
