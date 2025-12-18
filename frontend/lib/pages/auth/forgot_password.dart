@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import '../../theme/app_typography.dart';
 import '../../services/api_service.dart';
 import '../../utils/validators.dart';
 
@@ -169,10 +171,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: AppTypography.bodyMediumRegular.copyWith(color: Colors.white),
+        ),
         backgroundColor: isError ? AppColors.error : AppColors.success,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -189,6 +195,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -205,9 +213,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
+              style: AppTypography.heading3Semibold.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -215,9 +222,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         content: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF757575),
+          style: AppTypography.bodyMediumRegular.copyWith(
+            color: AppColors.textSecondary,
           ),
         ),
         actions: [
@@ -227,17 +233,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               onPressed: onConfirm ?? () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text(
+              child: Text(
                 'OK',
-                style: TextStyle(
+                style: AppTypography.bodyLargeSemibold.copyWith(
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -255,20 +261,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
+          icon: Icon(PhosphorIcons.arrowLeft(PhosphorIconsStyle.regular),
+              color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Lupa Kata Sandi',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.heading3Semibold.copyWith(color: Colors.black),
         ),
       ),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -310,33 +310,32 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   /// Build lock icon
   Widget _buildLockIcon() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Outer light circle
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFFBF7),
-            shape: BoxShape.circle,
+    return Center(
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _emailVerified
+                  ? PhosphorIcons.lockKeyOpen(PhosphorIconsStyle.regular)
+                  : PhosphorIcons.lockKey(PhosphorIconsStyle.regular),
+              color: AppColors.primary,
+              size: 40,
+            ),
           ),
         ),
-        // Inner circle with the lock icon
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            color: const Color(0xFFDFF8F0),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            _emailVerified ? Icons.lock_open : Icons.lock,
-            color: const Color(0xFF4CAF50),
-            size: 35,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -345,11 +344,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Text(
       _emailVerified ? 'Buat Kata Sandi Baru' : 'Lupa Kata Sandi?',
       textAlign: TextAlign.center,
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
+      style: AppTypography.heading2Semibold.copyWith(color: Colors.black),
     );
   }
 
@@ -358,11 +353,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Text(
       _emailVerified
           ? 'Masukkan kata sandi baru Anda untuk melanjutkan.'
-          : 'Tenang saja! Masukkan email akunmu untuk verifikasi.',
+          : 'Tenang saja! Masukkan email akunmu dan kami akan mengirimkan langkah pemulihan.',
       textAlign: TextAlign.center,
-      style: const TextStyle(
-        fontSize: 14,
-        color: Color(0xFF757575),
+      style: AppTypography.bodyMediumRegular.copyWith(
+        color: AppColors.textSecondary,
         height: 1.4,
       ),
     );
@@ -373,12 +367,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Email',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -389,27 +381,32 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           child: TextFormField(
             controller: _emailController,
+            style: AppTypography.bodyMediumRegular,
             decoration: InputDecoration(
               hintText: 'Masukkan email',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9E9E9E),
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
               suffixIcon: _emailVerified
-                  ? const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF4CAF50),
+                  ? Icon(
+                      PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
+                      color: AppColors.success,
                     )
                   : null,
             ),
@@ -427,12 +424,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Kata Sandi Baru',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
+        Text(
+          'Buat Kata Sandi Baru',
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -444,18 +439,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: TextFormField(
             controller: _newPasswordController,
             obscureText: _obscureNewPassword,
+            style: AppTypography.bodyMediumRegular,
             decoration: InputDecoration(
               hintText: 'Masukkan kata sandi baru',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9E9E9E),
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
               ),
               suffixIcon: IconButton(
                 onPressed: () {
@@ -464,13 +464,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   });
                 },
                 icon: Icon(
-                  _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
-                  color: const Color(0xFF757575),
+                  _obscureNewPassword
+                      ? PhosphorIcons.eyeSlash(PhosphorIconsStyle.regular)
+                      : PhosphorIcons.eye(PhosphorIconsStyle.regular),
+                  color: AppColors.textSecondary,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
             validator: (value) {
@@ -494,12 +496,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Konfirmasi Kata Sandi',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
+          style: AppTypography.bodyMediumMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -511,18 +511,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: TextFormField(
             controller: _confirmPasswordController,
             obscureText: _obscureConfirmPassword,
+            style: AppTypography.bodyMediumRegular,
             decoration: InputDecoration(
               hintText: 'Konfirmasi kata sandi',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9E9E9E),
+              hintStyle: AppTypography.bodyMediumRegular.copyWith(
+                color: AppColors.textTertiary,
               ),
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4CAF50), width: 1),
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.border, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
               ),
               suffixIcon: IconButton(
                 onPressed: () {
@@ -532,14 +537,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 },
                 icon: Icon(
                   _obscureConfirmPassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: const Color(0xFF757575),
+                      ? PhosphorIcons.eyeSlash(PhosphorIconsStyle.regular)
+                      : PhosphorIcons.eye(PhosphorIconsStyle.regular),
+                  color: AppColors.textSecondary,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
             validator: (value) {
@@ -562,9 +567,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget _buildActionButton() {
     return Container(
       width: double.infinity,
-      height: 50,
+      height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFF4CAF50),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
@@ -586,10 +591,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   )
                 : Text(
                     _emailVerified ? 'Ubah Kata Sandi' : 'Kirim',
-                    style: const TextStyle(
+                    style: AppTypography.bodyLargeSemibold.copyWith(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
           ),
