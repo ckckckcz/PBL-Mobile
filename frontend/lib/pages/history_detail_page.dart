@@ -122,6 +122,9 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildWasteInfo() {
+    final displayCategory = _getDisplayCategory(scanHistory.category);
+    final categoryColor = AppColors.getCategoryColor(scanHistory.category);
+
     return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
       padding: const EdgeInsets.all(16),
@@ -132,34 +135,25 @@ class HistoryDetailPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          _buildInfoRow(
             'Jenis Sampah',
-            style: AppTypography.bodySmallMedium.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
+            displayCategory,
+            valueColor: categoryColor,
+            icon: AppColors.getCategoryIcon(scanHistory.category),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                scanHistory.wasteType,
-                style: AppTypography.bodyLargeSemibold.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18, // Slightly adjusted for 'Large' feeling
-                ),
-              ),
-              _buildCategoryBadge(),
-            ],
+          const Divider(height: 24, color: AppColors.borderLight),
+          _buildInfoRow(
+            'Akurasi',
+            '${scanHistory.confidence.toStringAsFixed(1)}%',
+            valueColor: AppColors.success,
+            icon: PhosphorIcons.target(PhosphorIconsStyle.regular),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             'Dipindai: ${scanHistory.formattedDate}',
             style: AppTypography.bodySmallRegular.copyWith(
               color: AppColors.textSecondary,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
@@ -167,30 +161,42 @@ class HistoryDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryBadge() {
-    final categoryLower = scanHistory.category.toLowerCase();
-    final isOrganic = categoryLower.contains('organik') &&
-        !categoryLower.contains('anorganik');
-    // Colors based on screenshots
-    final color = isOrganic
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFFF9800); // Correct orange for inorganic text
-    final bgColor = isOrganic
-        ? const Color(0xFFE8F5E9)
-        : const Color(0xFFFFF8E1); // Correct light yellow for inorganic bg
+  String _getDisplayCategory(String? cat) {
+    final lower = cat?.toLowerCase() ?? '';
+    if (['organik', 'organic', 'sampah organik'].contains(lower))
+      return 'Organik';
+    if (['anorganik', 'inorganic', 'sampah anorganik'].contains(lower))
+      return 'Anorganik';
+    return cat ?? (cat?.isNotEmpty == true ? cat! : '-');
+  }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(
-        scanHistory.category,
-        style: AppTypography.bodySmallSemibold.copyWith(
-          color: color,
+  Widget _buildInfoRow(String label, String value,
+      {Color? valueColor, IconData? icon}) {
+    return Row(
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 24, color: AppColors.textSecondary),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
-      ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            color: valueColor ?? AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 
