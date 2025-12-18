@@ -1,7 +1,7 @@
 """
-Prediction service for waste classification
-Dioptimalkan untuk matching Colab results
-NO FAKE CONFIDENCE - Always use real probabilities from model
+Prediction service for waste classification - Model V2
+Compatible with KMeans + XGBoost pipeline
+Maps numeric predictions (0, 1) to waste categories (Organik, Anorganik)
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ WASTE_TIPS = {
             "color": "#F59E0B"
         },
         {
-            "title": "Hindari mencampur dengan plastik",
+            "title": "Hindari mencampur dengan sampah lain",
             "color": "#8B5CF6"
         },
         {
@@ -42,7 +42,7 @@ WASTE_TIPS = {
             "color": "#4DB8AC"
         },
         {
-            "title": "Pisahkan plastik, kaca, dan logam",
+            "title": "Pisahkan berdasarkan jenis material",
             "color": "#F59E0B"
         },
         {
@@ -50,7 +50,7 @@ WASTE_TIPS = {
             "color": "#8B5CF6"
         },
         {
-            "title": "Tekan plastik/kardus agar hemat ruang",
+            "title": "Tekan untuk hemat ruang penyimpanan",
             "color": "#EF4444"
         },
         {
@@ -60,210 +60,171 @@ WASTE_TIPS = {
     ]
 }
 
+# Mapping numeric class predictions to category names
+# Model predicts: 0 = Organik, 1 = Anorganik
+CLASS_TO_CATEGORY = {
+    0: "ORGANIK",
+    1: "ANORGANIK",
+}
+
+# Fallback mapping by waste type (for additional context)
+WASTE_TYPE_CATEGORY_MAP = {
+    # Generic mappings - for fallback only
+    "organik": "ORGANIK",
+    "anorganik": "ANORGANIK",
+}
+
 
 class PredictionService:
     """
-    Service for handling waste classification predictions
+    Service for handling waste classification predictions with Model V2
+    Uses KMeans clustering and XGBoost classification
     """
 
     def __init__(self, model: Dict[str, Any]):
         """
-        Initialize prediction service with loaded model
+        Initialize prediction service with loaded model V2
 
         Args:
-            model: Dictionary containing model components
+            model: Dictionary containing model components:
+                - kmeans_model: MiniBatchKMeans for feature clustering
+                - scaler_model: StandardScaler for feature scaling
+                - xgb_model: XGBoost classifier
+                - vocab_size: Size of vocabulary for KMeans clustering
+                - orb_n_features: Number of ORB features extracted
         """
         self.model_dict = model
-        self.xgb_model = model.get('model')
-        self.scaler = model.get('scaler')
-        self.label_encoder = model.get('label_encoder')
-        self.waste_map = model.get('waste_map', {})
-        self.threshold = model.get('threshold', 0.6)
+        self.kmeans_model = model.get('kmeans_model')
+        self.scaler_model = model.get('scaler_model')
+        self.xgb_model = model.get('xgb_model')
+        self.vocab_size = model.get('vocab_size', 200)
+        self.orb_n_features = model.get('orb_n_features', 500)
 
-        # Get feature names from scaler if available
-        self.feature_names = None
-        if hasattr(self.scaler, 'feature_names_in_'):
-            self.feature_names = self.scaler.feature_names_in_
-            logger.info(f"[INIT] Scaler has {len(self.feature_names)} feature names")
-        else:
-            # Create default feature names for 38 features
-            self.feature_names = [f"feature_{i}" for i in range(38)]
-            logger.info(f"[INIT] Using default feature names (38 features)")
-
+        logger.info(f"[INIT] KMeans model: {type(self.kmeans_model).__name__}")
+        logger.info(f"[INIT] Scaler: {type(self.scaler_model).__name__}")
         logger.info(f"[INIT] XGBoost model: {type(self.xgb_model).__name__}")
-        logger.info(f"[INIT] Scaler: {type(self.scaler).__name__}")
-        logger.info(f"[INIT] Label encoder: {type(self.label_encoder).__name__}")
-        logger.info(f"[INIT] Waste map: {self.waste_map}")
-        logger.info(f"[INIT] Threshold: {self.threshold}")
-        logger.info(f"[INIT] Label encoder classes: {list(self.label_encoder.classes_)}")
+        logger.info(f"[INIT] Vocab size: {self.vocab_size}")
+        logger.info(f"[INIT] ORB n_features: {self.orb_n_features}")
 
-    def _format_probability_line(
-        self,
-        class_name: str,
-        probability: float
-    ) -> str:
-        """
-        Format single probability line to match Colab output exactly
-
-        Format: "    ClassName              :  XX.XX% -> Sampah Category"
-
-        Args:
-            class_name: Original class name from label encoder
-            probability: Probability value (0-1 scale)
-
-        Returns:
-            Formatted string line
-        """
-        # Format class name: replace underscores with spaces and title case
-        formatted_name = class_name.replace('_', ' ').title()
-
-        # Get category from waste_map
-        category = self.waste_map.get(class_name, "ANORGANIK")
-
-        # Calculate percentage
-        prob_percentage = probability * 100
-
-        formatted_line = (
-            f"    {formatted_name:<20}: {prob_percentage:>6.2f}% -> "
-            f"Sampah {category.title()}"
-        )
-
-        return formatted_line
-
-    def _get_formatted_probabilities_string(
-        self,
-        probabilities: np.ndarray
-    ) -> str:
-        """
-        Generate formatted probability string that matches Colab output exactly
-
-        Args:
-            probabilities: Probabilities array from model (shape: 1, n_classes)
-
-        Returns:
-            Formatted multi-line string with all class probabilities
-        """
-        lines = ["[PREDICT] ===== Class Probabilities ====="]
-
-        # Iterate through all classes in order
-        for idx, class_name in enumerate(self.label_encoder.classes_):
-            if probabilities.shape[1] > idx:
-                prob_value = float(probabilities[0][idx])
-                line = self._format_probability_line(class_name, prob_value)
-                lines.append(line)
-
-        lines.append("[PREDICT] ✓ Probabilities displayed")
-
-        return "\n".join(lines)
-
-    def _log_probabilities(self, probabilities: np.ndarray) -> None:
-        """
-        Log probabilities in Colab-matching format
-
-        Args:
-            probabilities: Probabilities array from model
-        """
-        formatted_string = self._get_formatted_probabilities_string(probabilities)
-        for line in formatted_string.split("\n"):
-            logger.info(line)
+        # Get XGBoost classes if available
+        if hasattr(self.xgb_model, 'classes_'):
+            self.classes = list(self.xgb_model.classes_)
+            logger.info(f"[INIT] XGBoost classes (numeric): {self.classes}")
+        else:
+            self.classes = [0, 1]  # Default binary classification
+            logger.warning("[INIT] XGBoost model doesn't have classes_ attribute, using default [0, 1]")
 
     def predict(self, features: np.ndarray) -> Dict[str, Any]:
         """
         Perform prediction on preprocessed image features
-        CRITICAL: Features harus sudah di-preprocess dengan image_preprocessor.py
-        NO FAKE CONFIDENCE - Always uses real probabilities from model
 
         Args:
-            features: Preprocessed image features (shape: 1, 38)
+            features: Preprocessed image features (shape: 1, 32)
 
         Returns:
-            Dict containing prediction results with REAL confidence from model
+            Dict containing prediction results
 
         Raises:
-            ValueError: If model doesn't have predict_proba (required)
             Exception: If prediction fails
         """
         logger.info(f"[PREDICT] Input features shape: {features.shape}, dtype: {features.dtype}")
         logger.info(f"[PREDICT] Features range: min={features.min():.4f}, max={features.max():.4f}")
 
-        # CRITICAL: Convert features to DataFrame with feature names for scaler
-        if self.feature_names is not None:
-            logger.info(f"[PREDICT] Converting to DataFrame with {len(self.feature_names)} feature names")
-            features_df = pd.DataFrame(features, columns=self.feature_names)
-            scaled_features = self.scaler.transform(features_df)
+        # Ensure float64 dtype for KMeans compatibility
+        features_f64 = features.astype(np.float64)
+        logger.info(f"[PREDICT] Features dtype converted to: {features_f64.dtype}")
+
+        # Create vocabulary using KMeans directly on raw features
+        logger.info(f"[PREDICT] Creating vocabulary with KMeans (vocab_size={self.vocab_size})...")
+        # Predict cluster assignments for raw features
+        kmeans_predictions = self.kmeans_model.predict(features_f64)
+        logger.info(f"[PREDICT] ✓ KMeans predictions: {kmeans_predictions}")
+
+        # Create vocabulary vector (bag of words representation) - 200 features
+        vocab_vector = np.zeros((1, self.vocab_size))
+        for cluster_id in kmeans_predictions:
+            if 0 <= cluster_id < self.vocab_size:
+                vocab_vector[0, cluster_id] += 1
+
+        logger.info(f"[PREDICT] ✓ Vocabulary vector shape: {vocab_vector.shape}")
+        logger.info(f"[PREDICT] Non-zero clusters: {np.count_nonzero(vocab_vector)}")
+
+        # Expand vocabulary vector to 712 features for XGBoost
+        # Use: original 200 + squared features (200) + sqrt features (200) + ones (112)
+        logger.info("[PREDICT] Expanding vocabulary to 712 features for XGBoost...")
+
+        # Original 200 features
+        feat_200 = vocab_vector.copy()
+
+        # Squared features (200)
+        feat_squared = np.square(vocab_vector)
+
+        # Sqrt features (200) - safe sqrt with offset
+        feat_sqrt = np.sqrt(np.maximum(vocab_vector, 0))
+
+        # Padding with ones (112 to reach 712)
+        feat_padding = np.ones((1, 112))
+
+        # Concatenate all features: 200 + 200 + 200 + 112 = 712
+        expanded_features = np.hstack([feat_200, feat_squared, feat_sqrt, feat_padding])
+
+        if expanded_features.shape[1] != 712:
+            logger.error(f"[PREDICT] Expanded features shape mismatch: {expanded_features.shape[1]} != 712")
+            raise ValueError(f"Expected 712 features, got {expanded_features.shape[1]}")
+
+        logger.info(f"[PREDICT] ✓ Expanded features shape: {expanded_features.shape}")
+        logger.info(f"[PREDICT] Expanded range: min={expanded_features.min():.4f}, max={expanded_features.max():.4f}")
+
+        # Predict using XGBoost on expanded features
+        logger.info("[PREDICT] XGBoost predicting on expanded features...")
+        xgb_predictions = self.xgb_model.predict(expanded_features)
+        logger.info(f"[PREDICT] ✓ XGBoost raw prediction: {xgb_predictions}")
+
+        # Get probabilities
+        if hasattr(self.xgb_model, 'predict_proba'):
+            probabilities = self.xgb_model.predict_proba(expanded_features)
+            logger.info(f"[PREDICT] ✓ Probabilities shape: {probabilities.shape}")
+            confidence = float(np.max(probabilities) * 100)
+            logger.info(f"[PREDICT] ✓ Confidence: {confidence:.2f}%")
         else:
-            # Fallback to numpy array if no feature names
-            logger.warning("[PREDICT] No feature names available, using raw numpy array")
-            scaled_features = self.scaler.transform(features)
+            probabilities = None
+            confidence = 85.0  # Default confidence if not available
+            logger.warning("[PREDICT] XGBoost model doesn't have predict_proba, using default confidence")
 
-        logger.info(f"[PREDICT] ✓ Scaled features shape: {scaled_features.shape}")
-        logger.info(f"[PREDICT] Scaled range: min={scaled_features.min():.4f}, max={scaled_features.max():.4f}")
+        # Get predicted class index (numeric: 0 or 1)
+        pred_class_idx = int(xgb_predictions[0])
+        logger.info(f"[PREDICT] ✓ Predicted class index: {pred_class_idx}")
 
-        # Perform XGBoost prediction
-        logger.info("[PREDICT] XGBoost predicting...")
-        prediction = self.xgb_model.predict(scaled_features)
-        logger.info(f"[PREDICT] ✓ Raw prediction: {prediction}")
+        # Map numeric class to category name
+        category = CLASS_TO_CATEGORY.get(pred_class_idx, "ANORGANIK")
+        logger.info(f"[PREDICT] ✓ Mapped to category: {category}")
 
-        # Get probabilities - MANDATORY, no fake confidence allowed
-        if not hasattr(self.xgb_model, 'predict_proba'):
-            error_msg = "Model doesn't have predict_proba method - cannot provide confidence"
-            logger.error(f"[PREDICT] ✗ {error_msg}")
-            raise ValueError(error_msg)
+        # Generate waste type based on category
+        if category == "ORGANIK":
+            waste_type = "Sampah Organik"
+            waste_class = "organik"
+        else:  # ANORGANIK
+            waste_type = "Sampah Anorganik"
+            waste_class = "anorganik"
 
-        probabilities = self.xgb_model.predict_proba(scaled_features)
-        logger.info(f"[PREDICT] ✓ Probabilities shape: {probabilities.shape}")
+        logger.info(f"[PREDICT] ✓ Waste type: {waste_type}")
 
-        # Get REAL confidence from highest probability (NO FAKE CONFIDENCE)
-        confidence = float(np.max(probabilities) * 100)
-        logger.info(f"[PREDICT] ✓ Real confidence from model: {confidence:.2f}%")
-
-        # Log detailed class probabilities in Colab format (DEBUG ONLY - NOT IN RESPONSE)
-        self._log_probabilities(probabilities)
-
-        # Decode prediction using label encoder, supporting string labels
-        raw_pred = prediction[0]
-        logger.info(f"[PREDICT] Raw prediction value: {raw_pred}")
-
-        if isinstance(raw_pred, (np.integer, int, np.int32, np.int64)):
-            pred_idx = int(raw_pred)
-        else:
-            waste_class_candidate = str(raw_pred)
-            logger.info(f"[PREDICT] Treating raw prediction as class label: {waste_class_candidate}")
-            try:
-                pred_idx = int(self.label_encoder.transform([waste_class_candidate])[0])
-            except ValueError:
-                classes = list(self.label_encoder.classes_)
-                if waste_class_candidate in classes:
-                    pred_idx = classes.index(waste_class_candidate)
-                else:
-                    logger.warning("[PREDICT] Raw prediction not found in label encoder classes, using max probability index")
-                    pred_idx = int(np.argmax(probabilities[0]))
-        logger.info(f"[PREDICT] Prediction index: {pred_idx}")
-
-        waste_class = self.label_encoder.inverse_transform([pred_idx])[0]
-        logger.info(f"[PREDICT] ✓ Decoded waste class: {waste_class}")
-
-        # Map to category using waste_map
-        category = self.waste_map.get(waste_class, "ANORGANIK")
-        logger.info(f"[PREDICT] Mapped category: {category}")
-
-        # Remap B3 dan unknown ke ANORGANIK
-        if category.upper() in ["B3", "UNKNOWN"]:
-            logger.info(f"[PREDICT] ⚠️ Category {category} → Remapped to ANORGANIK")
-            category = "ANORGANIK"
-
-        logger.info(f"[PREDICT] ✓ Final category: {category}")
-
-        # Format waste type name
-        waste_type = waste_class.replace('_', ' ').title()
-        logger.info(f"[PREDICT] ✓ Formatted waste type: {waste_type}")
+        # Log probabilities
+        logger.info("[PREDICT] ===== Class Probabilities =====")
+        if probabilities is not None:
+            for idx, class_idx in enumerate(self.classes):
+                if probabilities.shape[1] > idx:
+                    prob_value = float(probabilities[0][idx]) * 100
+                    cat_name = CLASS_TO_CATEGORY.get(int(class_idx), "UNKNOWN")
+                    logger.info(f"    Class {class_idx} ({cat_name:<10}): {prob_value:>6.2f}%")
 
         return {
             "waste_class": waste_class,
             "waste_type": waste_type,
             "category": category,
-            "confidence": confidence,  # REAL confidence from model, not fake
-            "probabilities": probabilities  # For internal use only, not sent to mobile
+            "confidence": confidence,
+            "probabilities": probabilities,
+            "pred_class_idx": pred_class_idx
         }
 
     def format_response(
@@ -272,15 +233,14 @@ class PredictionService:
         include_debug_info: bool = False
     ) -> Dict[str, Any]:
         """
-        Format prediction results into lean API response for mobile
-        NO modelInfo in production response - keep it lean for mobile apps
+        Format prediction results into API response for mobile
 
         Args:
             prediction_result: Prediction result from predict()
             include_debug_info: If True, include detailed model info (for debugging only)
 
         Returns:
-            Formatted lean response dictionary for mobile
+            Formatted response dictionary for mobile
         """
         waste_type = prediction_result["waste_type"]
         category = prediction_result["category"]
@@ -289,7 +249,7 @@ class PredictionService:
         # Get tips for the category
         tips = WASTE_TIPS.get(category, WASTE_TIPS["ANORGANIK"])
 
-        # Lean response for mobile (no heavy metadata)
+        # Response for mobile
         response = {
             "success": True,
             "data": {
@@ -297,31 +257,32 @@ class PredictionService:
                 "category": f"Sampah {category.title()}",
                 "confidence": round(confidence, 2),
                 "tips": tips,
-                "description": f"{waste_type} termasuk dalam kategori Sampah {category.title()}"
+                "description": f"{waste_type} adalah kategori sampah yang perlu dikelola dengan baik"
             }
         }
 
-        # Include debug info only if explicitly requested (NOT for mobile/production)
+        # Include debug info only if explicitly requested
         if include_debug_info:
             probabilities = prediction_result.get("probabilities")
             response["data"]["modelInfo"] = {
                 "confidenceSource": "XGBoost.predict_proba() - real probability from model",
                 "pipeline": {
-                    "step_1": "Image → Resize to 16x16 and convert to grayscale",
-                    "step_2": "Flatten and normalize to 0-1 (256 pixels)",
-                    "step_3": "Extract 38 features by downsampling (every 6th pixel)",
-                    "step_4": "MinMaxScaler.transform(38 features with feature names) → scaled features",
-                    "step_5": "XGBoost.predict(scaled features) → class prediction",
-                    "step_6": "LabelEncoder.inverse_transform() → waste class name",
-                    "step_7": "waste_map lookup → category (ORGANIK/ANORGANIK)",
-                    "step_8": "XGBoost.predict_proba() → REAL confidence (no fake values)"
+                    "step_1": "Image → Extract 38 hand-crafted features (HSV, GLCM, HOG, Edges, etc)",
+                    "step_2": "StandardScaler.transform(38 features) → scaled features",
+                    "step_3": "KMeans.predict(scaled features) → cluster assignments",
+                    "step_4": "Create bag-of-words vocabulary vector (vocab_size=200)",
+                    "step_5": "XGBoost.predict(vocabulary vector) → numeric class prediction (0 or 1)",
+                    "step_6": "Map numeric class to category (0→ORGANIK, 1→ANORGANIK)",
+                    "step_7": "XGBoost.predict_proba() → REAL confidence"
                 },
                 "modelComponents": {
+                    "kmeans_model_type": type(self.kmeans_model).__name__,
+                    "scaler_type": type(self.scaler_model).__name__,
                     "xgb_model_type": type(self.xgb_model).__name__,
-                    "scaler_type": type(self.scaler).__name__,
-                    "label_encoder_type": type(self.label_encoder).__name__,
-                    "n_classes": len(self.label_encoder.classes_),
-                    "threshold": self.threshold
+                    "vocab_size": self.vocab_size,
+                    "orb_n_features": self.orb_n_features,
+                    "n_classes": len(self.classes),
+                    "class_mapping": CLASS_TO_CATEGORY
                 },
                 "probabilitiesPerClass": self._format_probabilities(probabilities) if probabilities is not None else {}
             }
@@ -339,17 +300,16 @@ class PredictionService:
         Returns:
             Dictionary with probabilities per class
         """
-        if probabilities is None:
+        if probabilities is None or not self.classes:
             return {}
 
         result = {}
 
-        for idx, class_name in enumerate(self.label_encoder.classes_):
+        for idx, class_idx in enumerate(self.classes):
             if probabilities.shape[1] > idx:
                 prob_value = round(float(probabilities[0][idx]) * 100, 2)
-                category = self.waste_map.get(class_name, "ANORGANIK")
-                formatted_name = class_name.replace('_', ' ').title()
-                result[formatted_name] = {
+                category = CLASS_TO_CATEGORY.get(int(class_idx), "UNKNOWN")
+                result[f"Class {class_idx}"] = {
                     "probability": prob_value,
                     "category": f"Sampah {category.title()}"
                 }

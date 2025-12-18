@@ -106,12 +106,15 @@ class AppColors {
 
   // Get category color by name
   static Color getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
+    final lowerCategory = category.toLowerCase();
+    switch (lowerCategory) {
       case 'organik':
       case 'organic':
+      case 'sampah organik':
         return categoryOrganic;
       case 'anorganik':
       case 'inorganic':
+      case 'sampah anorganik':
         return categoryInorganic;
       default:
         return textTertiary;
@@ -120,12 +123,15 @@ class AppColors {
 
   // Get category icon by name
   static IconData getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
+    final lowerCategory = category.toLowerCase();
+    switch (lowerCategory) {
       case 'organik':
       case 'organic':
+      case 'sampah organik':
         return PhosphorIcons.leaf(PhosphorIconsStyle.regular);
       case 'anorganik':
       case 'inorganic':
+      case 'sampah anorganik':
         return PhosphorIcons.recycle(PhosphorIconsStyle.regular);
       default:
         return PhosphorIcons.question(PhosphorIconsStyle.regular);

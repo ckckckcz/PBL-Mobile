@@ -21,8 +21,8 @@ class ModelService:
             self.BASE_DIR = Path(__file__).resolve().parents[2]
 
         # Hardcoded path (aman & konsisten)
-        self.artifacts_path = self.BASE_DIR / "model" / "artifacts.pkl"
-        self.model_json_path = self.BASE_DIR / "model" / "xgb_model.json"
+        self.artifacts_path = self.BASE_DIR / "model" / "model_v2.pkl"
+        self.model_json_path = self.BASE_DIR / "model" / "xgb_v2.json"
 
         self.model: Optional[Dict[str, Any]] = None
         self.is_validated = False
@@ -195,7 +195,7 @@ class ModelService:
         return {
             "loaded": True,
             "validated": self.is_validated,
-            "source": "xgb_model.json + artifacts.pkl",
+            "source": "xgb_v2.json + model_v2.pkl",
             "components": list(self.model.keys()) if self.model else [],
             "artifacts_path": str(self.artifacts_path),
             "model_path": str(self.model_json_path),

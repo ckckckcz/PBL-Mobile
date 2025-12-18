@@ -14,7 +14,7 @@ from typing import Dict, Any
 from ..models.schemas import PredictionResponse
 from ..services.model_service import get_model_service
 from ..services.prediction_service import get_prediction_service
-from ..services.image_service import get_image_preprocessor
+from ..services.v2.image_preprocessor import get_image_preprocessor_v2
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api", tags=["Prediction"])
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 MIN_IMAGE_SIZE = 16  # 16x16 pixels minimum
 MAX_IMAGE_SIZE = 4096  # 4096x4096 pixels maximum
-EXPECTED_FEATURE_SHAPE = (1, 38)  # Expected shape after preprocessing
+EXPECTED_FEATURE_SHAPE = (1, 32)  # Expected shape after preprocessing (Model V2)
 EXPECTED_DTYPE = np.float32  # Expected dtype for features
 
 
@@ -99,37 +99,34 @@ def _validate_features(features: np.ndarray) -> None:
         logger.error(f"[PREDICT] {error_msg}")
         raise HTTPException(status_code=500, detail=error_msg)
 
-    # Check value range (should be 0-1 after preprocessing)
-    if features.min() < 0 or features.max() > 1:
-        logger.warning(
-            f"[PREDICT] Features outside expected range [0,1]: "
-            f"min={features.min():.4f}, max={features.max():.4f}"
-        )
-
     logger.debug("[PREDICT] ✓ Features validation passed")
 
 
 def _format_lean_response(prediction_result: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format lean JSON response for mobile apps
+    Binary classification: only Sampah Organik or Sampah Anorganik
     Remove heavy metadata, keep only essential data
-    NO modelInfo, NO formatted_probabilities - lean response only
     """
     waste_type = prediction_result["waste_type"]
     category = prediction_result["category"]
     confidence = prediction_result["confidence"]
 
-    # Simplified tips based on category
+    # Tips based on category (Organik or Anorganik only)
     if category.upper() == "ORGANIK":
         tips = [
-            {"title": "Pisahkan dari sampah anorganik", "color": "#10B981"},
+            {"title": "Pisahkan sampah organik dari anorganik", "color": "#10B981"},
             {"title": "Buat kompos dari sisa makanan", "color": "#4DB8AC"},
-            {"title": "Proses dalam 24 jam untuk menghindari bau", "color": "#F59E0B"}
+            {"title": "Gunakan untuk pakan ternak jika memungkinkan", "color": "#F59E0B"},
+            {"title": "Hindari mencampur dengan sampah lain", "color": "#8B5CF6"},
+            {"title": "Proses dalam waktu 24 jam untuk menghindari bau", "color": "#EF4444"}
         ]
     else:  # ANORGANIK
         tips = [
-            {"title": "Bersihkan sebelum dibuang", "color": "#4DB8AC"},
-            {"title": "Pisahkan plastik, kaca, dan logam", "color": "#F59E0B"},
+            {"title": "Bersihkan sampah anorganik sebelum dibuang", "color": "#4DB8AC"},
+            {"title": "Pisahkan berdasarkan jenis material", "color": "#F59E0B"},
+            {"title": "Gunakan ulang wadah yang masih layak", "color": "#8B5CF6"},
+            {"title": "Tekan untuk hemat ruang penyimpanan", "color": "#EF4444"},
             {"title": "Setorkan ke bank sampah terdekat", "color": "#10B981"}
         ]
 
@@ -140,7 +137,7 @@ def _format_lean_response(prediction_result: Dict[str, Any]) -> Dict[str, Any]:
             "category": f"Sampah {category.title()}",
             "confidence": round(confidence, 2),
             "tips": tips,
-            "description": f"{waste_type} termasuk kategori Sampah {category.title()}"
+            "description": f"{waste_type} adalah kategori sampah yang perlu dikelola dengan baik"
         }
     }
 
@@ -148,14 +145,15 @@ def _format_lean_response(prediction_result: Dict[str, Any]) -> Dict[str, Any]:
 @router.post("/predict", response_model=PredictionResponse)
 async def predict_waste(file: UploadFile = File(...)):
     """
-    Single endpoint untuk prediksi jenis sampah dari gambar
+    Endpoint untuk prediksi jenis sampah dari gambar
+    Binary classification: Sampah Organik atau Sampah Anorganik
     STRICT VALIDATION - All inputs are validated before processing
 
     Validasi Input:
     - File type: image/* atau application/octet-stream
     - File size: maksimal 10MB
     - Image dimensions: 16x16 sampai 4096x4096 pixels
-    - Feature shape: (1, 38)
+    - Feature shape: (1, 32) for Model V2
     - Feature dtype: float32
 
     Model Readiness:
@@ -185,7 +183,6 @@ async def predict_waste(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File harus berupa gambar")
 
     # Support various MIME types for maximum mobile compatibility
-    # image/jpg is non-standard but commonly sent by mobile devices
     allowed_types = {
         "image/jpeg",      # Standard JPEG
         "image/jpg",       # Non-standard but common (mobile devices)
@@ -254,10 +251,10 @@ async def predict_waste(file: UploadFile = File(...)):
         logger.error(f"[PREDICT] Invalid image: {e}")
         raise HTTPException(status_code=400, detail="File bukan gambar yang valid")
 
-    # 4. Preprocess image with strict validation
+    # 4. Preprocess image with Model V2 preprocessor
     try:
-        logger.info("[PREDICT] Preprocessing image...")
-        image_preprocessor = get_image_preprocessor()
+        logger.info("[PREDICT] Preprocessing image with Model V2...")
+        image_preprocessor = get_image_preprocessor_v2()
         processed_features = image_preprocessor.preprocess(image)
         logger.info(f"[PREDICT] ✓ Preprocessed: shape={processed_features.shape}, dtype={processed_features.dtype}")
 

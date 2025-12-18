@@ -44,7 +44,7 @@ class ResultCard extends StatelessWidget {
         children: [
           _buildBadges(),
           const SizedBox(height: 16),
-          _buildWasteType(),
+          // _buildWasteType(),
           const SizedBox(height: 12),
           _buildDescription(),
         ],
@@ -58,6 +58,7 @@ class ResultCard extends StatelessWidget {
         _CategoryBadge(category: category),
         const Spacer(),
         _ConfidenceBadge(confidence: confidence),
+        const SizedBox(width: 8)
       ],
     );
   }

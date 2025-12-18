@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../constants/app_colors.dart';
 import '../widgets/scan_result_widgets.dart';
+
 class ScanResultPage extends StatefulWidget {
   final String? imageUri;
   final String? wasteType;
@@ -112,7 +113,6 @@ class _ScanResultPageState extends State<ScanResultPage> {
 
   /// Handle rescan button press
   void _handleRescan() {
-    // Pop until we reach the main navigation
     Navigator.popUntil(context, (route) => route.isFirst);
   }
 

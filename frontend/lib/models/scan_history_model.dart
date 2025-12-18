@@ -52,17 +52,30 @@ class ScanHistory {
   // Format date for display
   String get formattedDate {
     final months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
     ];
     return '${scanDate.day} ${months[scanDate.month - 1]} ${scanDate.year}';
   }
 
   // Get icon based on category
   String get iconPath {
-    if (category.toLowerCase().contains('organik')) {
+    final categoryLower = category.toLowerCase();
+    // Handle both "Organik" and "Sampah Organik" formats
+    if (categoryLower.contains('organik') &&
+        !categoryLower.contains('anorganik')) {
       return 'assets/images/history/Organik.png';
-    } else if (category.toLowerCase().contains('anorganik')) {
+    } else if (categoryLower.contains('anorganik')) {
       return 'assets/images/history/Anorganik.png';
     } else {
       return 'assets/images/history/Organik.png'; // default

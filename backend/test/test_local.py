@@ -1,5 +1,5 @@
 """
-Local test script – aligned with XGB JSON + artifacts.pkl architecture
+Local test script – aligned with XGB JSON + model_v2.pkl architecture
 """
 
 import sys
@@ -26,8 +26,8 @@ def test_model_files_exist():
 
     ok = True
 
-    xgb = MODEL_DIR / "xgb_model.json"
-    art = MODEL_DIR / "artifacts.pkl"
+    xgb = MODEL_DIR / "xgb_v2.json"
+    art = MODEL_DIR / "model_v2.pkl"
 
     if xgb.exists():
         logger.info(f"✅ XGB model: {xgb}")
@@ -57,11 +57,11 @@ def test_manual_loading():
         import joblib
 
         xgb = XGBClassifier()
-        xgb.load_model(str(MODEL_DIR / "xgb_model.json"))
+        xgb.load_model(str(MODEL_DIR / "xgb_v2.json"))
 
         logger.info("✅ XGBoost JSON loaded")
 
-        artifacts = joblib.load(MODEL_DIR / "artifacts.pkl")
+        artifacts = joblib.load(MODEL_DIR / "model_v2.pkl")
 
         if not isinstance(artifacts, dict):
             logger.error(f"❌ Artifacts not dict: {type(artifacts)}")

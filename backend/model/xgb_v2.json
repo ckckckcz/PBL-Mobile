@@ -1,0 +1,10 @@
+{
+    "vocab_size": 200,
+    "orb_n_features": 500,
+    "labels": {
+        "0": "Organik",
+        "1": "Anorganik"
+    },
+    "model_type": "ORB + BoVW + XGBoost",
+    "version": "1.0"
+}

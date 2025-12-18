@@ -15,7 +15,7 @@ API untuk klasifikasi jenis sampah menggunakan model XGBoost hybrid. Repository 
 ## 🚀 Fitur Utama
 
 - **FastAPI** dengan middleware logging yang mendetail.
-- **ModelService** + **PredictionService** yang memuat model `xgb_model.json` dan `artifacts.pkl`.
+- **ModelService** + **PredictionService** yang memuat model `xgb_v2.json` dan `model_v2.pkl`.
 - Konfigurasi otomatis `HOST` dan `PORT` mengikuti variabel lingkungan Hugging Face.
 - Dockerfile ringan berbasis `python:3.10-slim` dengan dependensi yang diperlukan.
 
@@ -26,7 +26,7 @@ API untuk klasifikasi jenis sampah menggunakan model XGBoost hybrid. Repository 
   - `services/` – pemuatan model dan prediksi.
   - `api/` – router `health` dan `predict`.
 - `model/`
-  - `xgb_model.json`, `artifacts.pkl`, dan aset pendukung.
+  - `xgb_v2.json`, `model_v2.pkl`, dan aset pendukung.
 - `requirements.txt`
 - `Dockerfile`
 - `index.py` (opsional untuk Vercel)

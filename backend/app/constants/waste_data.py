@@ -1,5 +1,6 @@
 """
 Constants for waste classification and tips
+Model V2: Binary classification (Organik vs Anorganik)
 """
 
 from typing import Dict, List, Any
@@ -34,7 +35,7 @@ WASTE_TIPS: Dict[str, List[Dict[str, str]]] = {
             "color": "#4DB8AC"
         },
         {
-            "title": "Pisahkan plastik, kaca, dan logam",
+            "title": "Pisahkan berdasarkan jenis material",
             "color": "#F59E0B"
         },
         {
@@ -52,19 +53,35 @@ WASTE_TIPS: Dict[str, List[Dict[str, str]]] = {
     ]
 }
 
-# Mapping prediction class ke kategori sampah
+# Mapping numeric class predictions to category names
+# XGBoost Model: 0 = Organik, 1 = Anorganik
 CLASS_MAPPING: Dict[int, str] = {
     0: "Sampah Organik",
     1: "Sampah Anorganik",
 }
 
-# Category mapping untuk fallback
+# Category mapping untuk internal use
 CATEGORY_MAPPING: Dict[str, str] = {
-    "Sampah Organik": "Sampah Organik",
-    "Sampah Anorganik": "Sampah Anorganik",
+    "ORGANIK": "Sampah Organik",
+    "ANORGANIK": "Sampah Anorganik",
+    0: "Sampah Organik",
+    1: "Sampah Anorganik",
 }
 
-# Keywords untuk kategori sampah
-ORGANIC_KEYWORDS = ['organic', 'organik', 'food', 'makanan', 'leaves', 'daun']
-INORGANIC_KEYWORDS = ['plastic', 'plastik', 'bottle', 'botol', 'can', 'kaleng',
-                      'paper', 'kertas', 'cardboard', 'glass', 'kaca']
+# Keywords untuk kategori sampah (untuk debugging/logging)
+ORGANIC_KEYWORDS = [
+    'organic', 'organik', 'food', 'makanan', 'organic waste'
+]
+INORGANIC_KEYWORDS = [
+    'inorganic', 'anorganik', 'inorganic waste'
+]
+
+# Model configuration
+MODEL_CONFIG = {
+    "n_classes": 2,
+    "class_names": ["Organik", "Anorganik"],
+    "binary_classification": True,
+    "vocab_size": 200,
+    "orb_n_features": 500,
+    "image_features": 38,
+}

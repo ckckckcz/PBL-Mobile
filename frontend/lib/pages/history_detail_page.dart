@@ -77,30 +77,34 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildImageWidget() {
-    if (scanHistory.imageUri.startsWith('http')) {
-      return Image.network(
-        scanHistory.imageUri,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder();
-        },
-      );
-    } else if (scanHistory.imageUri.startsWith('assets/')) {
-      return Image.asset(
-        scanHistory.imageUri,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder();
-        },
-      );
-    } else {
-      return Image.file(
-        File(scanHistory.imageUri),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder();
-        },
-      );
+    try {
+      if (scanHistory.imageUri.startsWith('http')) {
+        return Image.network(
+          scanHistory.imageUri,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildPlaceholder();
+          },
+        );
+      } else if (scanHistory.imageUri.startsWith('assets/')) {
+        return Image.asset(
+          scanHistory.imageUri,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildPlaceholder();
+          },
+        );
+      } else {
+        return Image.file(
+          File(scanHistory.imageUri),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildPlaceholder();
+          },
+        );
+      }
+    } catch (e) {
+      return _buildPlaceholder();
     }
   }
 
@@ -164,8 +168,9 @@ class HistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildCategoryBadge() {
-    final isOrganic = scanHistory.category.toLowerCase().contains('organik') &&
-        !scanHistory.category.toLowerCase().contains('anorganik');
+    final categoryLower = scanHistory.category.toLowerCase();
+    final isOrganic = categoryLower.contains('organik') &&
+        !categoryLower.contains('anorganik');
     // Colors based on screenshots
     final color = isOrganic
         ? const Color(0xFF4CAF50)
