@@ -230,40 +230,44 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: AppColors.neutral[100],
                       height: 1,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const HistoryPage()),
-                        ).then((_) =>
-                            _loadStats()); // Refresh stats when returning from History
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Icon(
-                              PhosphorIcons.clockCounterClockwise(
-                                  PhosphorIconsStyle.regular),
-                              color: AppColors.neutral[600],
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Riwayat',
-                              style: AppTypography.bodyMediumMedium.copyWith(
-                                color: AppColors.textSecondary,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const HistoryPage()),
+                          ).then((_) =>
+                              _loadStats()); // Refresh stats when returning from History
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                PhosphorIcons.clockCounterClockwise(
+                                    PhosphorIconsStyle.regular),
+                                color: AppColors.neutral[600],
+                                size: 24,
                               ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              PhosphorIcons.caretRight(
-                                  PhosphorIconsStyle.regular),
-                              color: AppColors.neutral[600],
-                              size: 20,
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Text(
+                                'Riwayat',
+                                style: AppTypography.bodyMediumMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                PhosphorIcons.caretRight(
+                                    PhosphorIconsStyle.regular),
+                                color: AppColors.neutral[600],
+                                size: 20,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -280,7 +284,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: Column(
                 children: [
-                  GestureDetector(
+                  _buildMenuOption(
+                    title: 'Akun Saya',
+                    icon: PhosphorIcons.user(PhosphorIconsStyle.regular),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -298,34 +304,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         widget.onProfileUpdated?.call();
                       });
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            PhosphorIcons.user(PhosphorIconsStyle.regular),
-                            color: AppColors.neutral[600],
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Akun Saya',
-                            style: AppTypography.bodyMediumMedium.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            PhosphorIcons.caretRight(
-                                PhosphorIconsStyle.regular),
-                            color: AppColors.neutral[600],
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                  GestureDetector(
+                  _buildMenuOption(
+                    title: 'Ubah Kata Sandi',
+                    icon: PhosphorIcons.lock(PhosphorIconsStyle.regular),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -334,34 +316,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const ChangePasswordStep1Page()),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            PhosphorIcons.lock(PhosphorIconsStyle.regular),
-                            color: AppColors.neutral[600],
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Ubah Kata Sandi',
-                            style: AppTypography.bodyMediumMedium.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            PhosphorIcons.caretRight(
-                                PhosphorIconsStyle.regular),
-                            color: AppColors.neutral[600],
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                  GestureDetector(
+                  _buildMenuOption(
+                    title: 'Tentang Aplikasi',
+                    icon: PhosphorIcons.info(PhosphorIconsStyle.regular),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -369,59 +327,63 @@ class _ProfilePageState extends State<ProfilePage> {
                             builder: (context) => const AboutAppPage()),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            PhosphorIcons.info(PhosphorIconsStyle.regular),
-                            color: AppColors.neutral[600],
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Tentang Aplikasi',
-                            style: AppTypography.bodyMediumMedium.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            PhosphorIcons.caretRight(
-                                PhosphorIconsStyle.regular),
-                            color: AppColors.neutral[600],
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                  GestureDetector(
+                  _buildMenuOption(
+                    title: 'Keluar',
+                    icon: PhosphorIcons.signOut(PhosphorIconsStyle.regular),
                     onTap: _handleLogout,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            PhosphorIcons.signOut(PhosphorIconsStyle.regular),
-                            color: AppColors.error,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Keluar',
-                            style: AppTypography.bodyMediumMedium.copyWith(
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    isDestructive: true,
+                    showChevron: false,
                   ),
                 ],
               ),
             )
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuOption({
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+    bool showChevron = true,
+  }) {
+    final color = isDestructive ? AppColors.error : AppColors.neutral[600];
+    final textColor = isDestructive ? AppColors.error : AppColors.textSecondary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: AppTypography.bodyMediumMedium.copyWith(
+                  color: textColor,
+                ),
+              ),
+              if (showChevron) ...[
+                const Spacer(),
+                Icon(
+                  PhosphorIcons.caretRight(PhosphorIconsStyle.regular),
+                  color: AppColors.neutral[600],
+                  size: 20,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
