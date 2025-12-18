@@ -14,6 +14,7 @@ from typing import Dict, Any
 from ..models.schemas import PredictionResponse
 from ..services.model_service import get_model_service
 from ..services.prediction_service import get_prediction_service
+from ..services.v2.image_preprocessor import get_image_preprocessor_v2
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,41 @@ def _check_model_readiness() -> None:
     logger.debug("[PREDICT] ✓ Model and services are ready")
 
 
+def _validate_features(features: np.ndarray) -> None:
+    """
+    Validate preprocessed features shape and dtype
+    STRICT VALIDATION - Will raise HTTPException if invalid
+
+    Args:
+        features: Preprocessed features array
+
+    Raises:
+        HTTPException: If features are invalid
+    """
+    # Check shape
+    if features.shape != EXPECTED_FEATURE_SHAPE:
+        error_msg = f"Invalid feature shape: {features.shape}, expected {EXPECTED_FEATURE_SHAPE}"
+        logger.error(f"[PREDICT] {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+    # Check dtype
+    if features.dtype != EXPECTED_DTYPE:
+        error_msg = f"Invalid feature dtype: {features.dtype}, expected {EXPECTED_DTYPE}"
+        logger.error(f"[PREDICT] {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+    # Check for NaN or Inf values
+    if np.isnan(features).any():
+        error_msg = "Features contain NaN values"
+        logger.error(f"[PREDICT] {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+    if np.isinf(features).any():
+        error_msg = "Features contain Inf values"
+        logger.error(f"[PREDICT] {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+    logger.debug("[PREDICT] ✓ Features validation passed")
 
 
 def _format_lean_response(prediction_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -215,14 +251,28 @@ async def predict_waste(file: UploadFile = File(...)):
         logger.error(f"[PREDICT] Invalid image: {e}")
         raise HTTPException(status_code=400, detail="File bukan gambar yang valid")
 
-    # 4. Preprocess and Predict
+    # 4. Preprocess image with Model V2 preprocessor
     try:
-        logger.info("[PREDICT] Running prediction service (Hybrid Hybrid: BOVW + Color Hist)...")
+        logger.info("[PREDICT] Preprocessing image with Model V2...")
+        image_preprocessor = get_image_preprocessor_v2()
+        processed_features = image_preprocessor.preprocess(image)
+        logger.info(f"[PREDICT] ✓ Preprocessed: shape={processed_features.shape}, dtype={processed_features.dtype}")
+
+        # STRICT: Validate preprocessed features
+        _validate_features(processed_features)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[PREDICT] Preprocessing failed: {e}")
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=f"Error preprocessing image: {str(e)}")
+
+    # 5. Perform prediction (services already checked in _check_model_readiness)
+    try:
+        logger.info("[PREDICT] Running prediction...")
         prediction_service = get_prediction_service()
-        
-        # Pass the PIL Image directly to prediction service
-        # conversion to CV2/Array happens inside the service
-        prediction_result = prediction_service.predict(image)
+        prediction_result = prediction_service.predict(processed_features)
 
         logger.info(
             f"[PREDICT] ✓ Result: {prediction_result['waste_type']}, "
@@ -231,8 +281,8 @@ async def predict_waste(file: UploadFile = File(...)):
         )
 
     except ValueError as e:
-        # ValueError from prediction service (e.g., feature extraction failed)
-        logger.error(f"[PREDICT] Prediction error: {e}")
+        # ValueError from prediction service (e.g., missing predict_proba)
+        logger.error(f"[PREDICT] Prediction validation error: {e}")
         raise HTTPException(status_code=500, detail=f"Model error: {str(e)}")
     except Exception as e:
         logger.error(f"[PREDICT] Prediction failed: {e}")
